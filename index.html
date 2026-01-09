@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Scape Room - Protocolo Cyberpunk</title>
-    <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22&gt;&lt;text y=%22.9em%22 font-size=%2290%22&gt;🐺&lt;/text&gt;&lt;/svg&gt;">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐺</text></svg>">
     
-    <!-- Librerías UMD -->
+    <!-- Librerías desde CDN (No requiere build) -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -21,23 +21,17 @@
                 extend: {
                     colors: {
                         cyber: {
-                            black: '#020202',
-                            green: '#00ff41',
-                            blue: '#00f3ff',
-                            red: '#ff003c',
-                            gold: '#ffd700',
-                            dark: '#0a0a0a'
+                            black: '#020202', green: '#00ff41', blue: '#00f3ff',
+                            red: '#ff003c', gold: '#ffd700', dark: '#0a0a0a'
                         }
                     },
                     fontFamily: { mono: ['"Share Tech Mono"', 'monospace'] },
                     animation: {
                         'glitch': 'glitch 1s linear infinite',
-                        'scanline': 'scanline 8s linear infinite',
-                        'flicker': 'flicker 3s linear infinite',
                         'pulse-soft': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'alarm': 'alarm 0.5s ease-in-out infinite alternate',
                         'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
-                        'float': 'float 4s ease-in-out infinite',
+                        'shimmer': 'shimmer 1.5s infinite linear',
                     },
                     keyframes: {
                         glitch: {
@@ -45,24 +39,9 @@
                             '4%, 60%': { transform: 'translate(-2px,0) skew(0deg)' },
                             '62%': { transform: 'translate(0,0) skew(5deg)' },
                         },
-                        scanline: {
-                            '0%': { transform: 'translateY(-100%)' },
-                            '100%': { transform: 'translateY(100%)' }
-                        },
-                        alarm: {
-                            'from': { backgroundColor: 'rgba(255, 0, 60, 0.1)' },
-                            'to': { backgroundColor: 'rgba(255, 0, 60, 0.5)' }
-                        },
-                        shake: {
-                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
-                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
-                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
-                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' }
-                        }
+                        alarm: { 'from': { backgroundColor: 'rgba(255, 0, 60, 0.1)' }, 'to': { backgroundColor: 'rgba(255, 0, 60, 0.5)' } },
+                        shake: { '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(2px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(4px, 0, 0)' } },
+                        shimmer: { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(300%)' } }
                     }
                 }
             }
@@ -70,107 +49,41 @@
     </script>
 
     <style>
-        body {
-            background-color: #020202;
-            color: #00ff41;
-            overflow-x: hidden;
-            font-family: 'Share Tech Mono', monospace;
-        }
+        body { background-color: #020202; color: #00ff41; overflow-x: hidden; font-family: 'Share Tech Mono', monospace; }
         .bg-matrix {
             background-image: linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
                               linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
             background-size: 40px 40px;
         }
         .crt-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
                         linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-            background-size: 100% 3px, 3px 100%;
-            pointer-events: none;
-            z-index: 999;
+            background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 999;
         }
-        .cyber-border {
-            position: relative;
-            border: 1px solid rgba(0, 255, 65, 0.2);
-            box-sizing: border-box;
-        }
-        .cyber-border::before, .cyber-border::after,
-        .cyber-border > .corner::before, .cyber-border > .corner::after {
-            content: '';
-            position: absolute;
-            width: 15px;
-            height: 15px;
-            border: 2px solid #00ff41;
-            box-shadow: 0 0 10px #00ff41;
-            pointer-events: none;
+        .cyber-border { position: relative; border: 1px solid rgba(0, 255, 65, 0.3); }
+        .cyber-border::before, .cyber-border::after {
+            content: ''; position: absolute; width: 10px; height: 10px;
+            border: 2px solid #00ff41; pointer-events: none;
         }
         .cyber-border::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
         .cyber-border::after { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
-        .cyber-border > .corner::before { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
-        .cyber-border > .corner::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
-
-        .glitch-effect { text-shadow: 3px 0 #ff003c, -3px 0 #00f3ff; }
+        .huge-text { font-size: clamp(4rem, 15vw, 10rem); line-height: 0.8; }
         
-        input[type=range] {
-          -webkit-appearance: none;
-          width: 100%;
-          background: transparent;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-          width: 100%; height: 12px; cursor: pointer; background: #111; border-radius: 6px; border: 1px solid #00ff4155;
-        }
-        input[type=range]::-webkit-slider-thumb {
-          border: 2px solid #00ff41; height: 32px; width: 18px; border-radius: 3px; background: #00ff41; cursor: pointer; -webkit-appearance: none; margin-top: -11px; box-shadow: 0 0 20px #00ff41;
+        /* Ajuste de tamaño para inputs de bóveda */
+        .vault-input { 
+            background: #000; 
+            border: 2px solid #00f3ff; 
+            color: #00f3ff; 
+            width: 100%; 
+            text-align: center; 
+            font-size: 1.25rem; /* Reducido de 1.5rem */
+            outline: none; 
+            height: 3.5rem; /* Altura fija para consistencia */
         }
         
-        .huge-text { font-size: clamp(4rem, 15vw, 12rem); line-height: 0.8; }
-
-        .vault-input {
-            background: #000;
-            border: 2px solid #00f3ff;
-            color: #00f3ff;
-            text-shadow: 0 0 10px #00f3ff;
-            font-family: 'Share Tech Mono', monospace;
-            width: 100%;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        .vault-input:focus {
-            box-shadow: 0 0 20px #00f3ff;
-            outline: none;
-            border-color: #fff;
-        }
-
-        .admin-keyword-input {
-            background: rgba(0,0,0,0.8);
-            border: 2px solid rgba(0, 255, 65, 0.4);
-            color: #00ff41;
-            font-family: 'Share Tech Mono', monospace;
-            width: 100%;
-            padding: 1rem;
-            font-size: 1.5rem;
-            outline: none;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-        }
-        .admin-keyword-input:focus {
-            border-color: #00ff41;
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
-        }
-        
-        .led-green { background: #00ff41; box-shadow: 0 0 10px #00ff41; }
-        .led-blue { background: #00f3ff; box-shadow: 0 0 10px #00f3ff; }
-
-        .scan-animation {
-            background: linear-gradient(0deg, transparent 0%, rgba(0, 243, 255, 0.1) 50%, transparent 100%);
-            background-size: 100% 200%;
-            animation: scan 3s linear infinite;
-        }
-        @keyframes scan {
-            0% { background-position: 0 -100%; }
-            100% { background-position: 0 100%; }
-        }
+        .scan-animation { background: linear-gradient(0deg, transparent 0%, rgba(0, 243, 255, 0.1) 50%, transparent 100%); background-size: 100% 200%; animation: scan 3s linear infinite; position: absolute; inset: 0; pointer-events: none; }
+        @keyframes scan { 0% { background-position: 0 -100%; } 100% { background-position: 0 100%; } }
     </style>
 <script type="importmap">
 {
@@ -189,74 +102,126 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const MUSIC_URL = "https://cdn.pixabay.com/audio/2023/12/03/audio_82c610484a.mp3";
+        // Música de fondo (Royalty Free / Free Music Archive)
+        const AUDIO_PLAYLIST = [
+            "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/BoxCat_Games/Nameless_the_Hackers_RPG_Soundtrack/BoxCat_Games_-_10_-_Epic_Song.mp3",
+            "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3",
+            "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Kai_Engel/Satin/Kai_Engel_-_04_-_Sentinel.mp3"
+        ];
+
+        // Variable global para el contexto de audio
+        let globalAudioCtx = null;
+
+        const getAudioContext = () => {
+            if (!globalAudioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) globalAudioCtx = new AudioContext();
+            }
+            // Importante: intentar reanudar siempre que sea posible
+            if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+                globalAudioCtx.resume();
+            }
+            return globalAudioCtx;
+        };
+
+        // Generador de Sonidos Web Audio API
+        const synthSFX = (type, vol = 0.5) => {
+            try {
+                const ctx = getAudioContext();
+                if (!ctx) return;
+
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                const now = ctx.currentTime;
+                
+                if (type === 'click') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+                    gain.gain.setValueAtTime(vol * 0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } 
+                else if (type === 'success') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.linearRampToValueAtTime(880, now + 0.1);
+                    gain.gain.setValueAtTime(0, now);
+                    gain.gain.linearRampToValueAtTime(vol * 0.2, now + 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                    
+                    const osc2 = ctx.createOscillator();
+                    const gain2 = ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(554.37, now);
+                    osc2.frequency.linearRampToValueAtTime(1108.73, now + 0.1);
+                    gain2.gain.setValueAtTime(0, now);
+                    gain2.gain.linearRampToValueAtTime(vol * 0.1, now + 0.1);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                    osc2.start(now);
+                    osc2.stop(now + 0.6);
+                } 
+                else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.linearRampToValueAtTime(50, now + 0.3);
+                    gain.gain.setValueAtTime(vol * 0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+                else if (type === 'access') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(1200, now);
+                    osc.frequency.linearRampToValueAtTime(2400, now + 0.1);
+                    gain.gain.setValueAtTime(vol * 0.05, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                }
+            } catch (e) {
+                console.error("Audio Context Error", e);
+            }
+        };
+
         const SQUADS = [
             { name: 'Cobra', icon: '🐍' }, { name: 'Tigre', icon: '🐅' },
             { name: 'Halcón', icon: '🦅' }, { name: 'Lobo', icon: '🐺' },
             { name: 'Tiburón', icon: '🦈' }, { name: 'Águila', icon: '🦅' },
             { name: 'Pantera', icon: '🐆' }, { name: 'Oso', icon: '🐻' },
+            { name: 'León', icon: '🦁' }, { name: 'Dragón', icon: '🐉' },
+            { name: 'Fénix', icon: '🐦‍🔥' }, { name: 'Toro', icon: '🐂' },
+            { name: 'Rino', icon: '🦏' }, { name: 'Zorro', icon: '🦊' },
+            { name: 'Búho', icon: '🦉' }, { name: 'Gorila', icon: '🦍' },
         ];
 
-        const INITIAL_STATE = { 
-            stage: 'selection', 
-            roomId: '', 
-            adminKeyword: '', 
-            sectors: [], 
-            connectedSquads: [], 
-            finishedSquads: [], 
-            takenSquads: [], 
-            rawQuestions: [],
-            squadAnimal: null
-        };
-
-        const EXAMPLE_CSV_CONTENT = `Tipo;Pregunta;R1;R2;R3;R4;Tiempo;Correcta;URL Imagen
+        const EXAMPLE_CSV = `Tipo;Pregunta;R1;R2;R3;R4;Tiempo;Correcta;URL Imagen
 quiz;¿Qué operador repite cadenas en Python?;*;x;repeat();**;30;1;
 quiz;¿Qué método especial se ejecuta al crear un objeto?;__init__;__start__;constructor;__new__;30;1;
 quiz;¿Qué operador concatena cadenas en Python?;+;concat();join;.;30;1;
 quiz;¿Cómo se define una función en Python?;def;func;function;define;30;1;
 quiz;¿Qué tipo de dato es [1, 2, 3]?;Lista;Tupla;Diccionario;Set;30;1;
 quiz;¿Cómo se importa un módulo?;import;use;require;include;30;1;
-quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;
-quiz;¿Cuál es el valor de 3**2 en Python?;9;6;27;3;30;1;
-quiz;¿Cómo se llama la librería estándar para mate?;math;maths;mat;calc;30;1;
-quiz;¿Qué función mide la longitud de una lista?;len();size();count();length();30;1;
-quiz;¿Cuál es el valor booleano de 0 en Python?;False;True;None;Undefined;30;1;
-quiz;¿Cómo se agrega un elemento a una lista?;append();add();push();insert();30;1;
-quiz;¿Qué símbolo inicia un comentario?;#;//;--;/*;30;1;
-quiz;¿Qué palabra clave crea un bucle?;for;while;both;repeat;30;3;
-quiz;¿Qué función muestra texto en consola?;print();echo();write();log();30;1;
-quiz;¿Cómo se sale de un bucle prematuramente?;break;exit;stop;return;30;1;
-quiz;¿Qué operador comprueba igualdad?;==;=;equals;is;30;1;
-quiz;¿Cómo se obtiene la entrada del usuario?;input();get();read();prompt();30;1;
-quiz;¿Qué palabra define una clase?;class;struct;type;obj;30;1;
-quiz;¿Qué valor devuelve una función por defecto?;None;Null;0;False;30;1;`;
+quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
 
-        const parseCSV = (csvText) => {
-            const lines = csvText.trim().split('\n');
-            const startIndex = lines[0].toLowerCase().includes('tipo') ? 1 : 0;
-            return lines.slice(startIndex).map((line, i) => {
-                const parts = line.split(';').map(p => p.trim().replace(/^"|"$/g, ''));
-                if (parts.length < 8) return null;
-                return {
-                    id: `q-${i}`,
-                    question: parts[1],
-                    options: [parts[2], parts[3], parts[4], parts[5]].filter(o => o !== ''),
-                    correctIndex: (parseInt(parts[7], 10) || 1) - 1,
-                    imageUrl: parts[8] || null
-                };
-            }).filter(q => q !== null);
+        const formatTime = (ms) => {
+            if (!ms) return "00:00";
+            const totalSeconds = Math.floor(ms / 1000);
+            const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const secs = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${mins}:${secs}`;
         };
 
-        const downloadExampleCSV = () => {
-            const blob = new Blob([EXAMPLE_CSV_CONTENT], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", "mision_python_20_preguntas.csv");
-            link.click();
-        };
-
-        const Typewriter = ({ text, speed = 30, className }) => {
+        const Typewriter = ({ text, speed = 25, className }) => {
             const [disp, setDisp] = useState('');
             useEffect(() => {
                 let i = 0;
@@ -269,462 +234,583 @@ quiz;¿Qué valor devuelve una función por defecto?;None;Null;0;False;30;1;`;
             return <div className={className}>{disp}<span className="animate-pulse inline-block w-2 h-5 bg-cyber-green ml-1 align-middle"></span></div>;
         };
 
-        const SectorModal = ({ sector, onSolved, onLocked }) => {
+        const INITIAL_STATE = {
+            stage: 'selection',
+            roomId: '',
+            rawQuestions: [],
+            connectedSquads: [],
+            finishedSquads: [],
+            takenSquads: [],
+            sectors: [],
+            squadAnimal: null,
+            isSquadSelecting: false,
+            finalRank: 0,
+            finalTime: 0
+        };
+
+        function App() {
+            const [gameState, setGameState] = useState(INITIAL_STATE);
+            const [volume, setVolume] = useState(0.4);
+            const [isMuted, setIsMuted] = useState(true);
+            const [lockout, setLockout] = useState(0);
+            const [activeSectorId, setActiveSectorId] = useState(null);
+            const [vaultCodes, setVaultCodes] = useState(['','','','','']);
+            
+            const audioRef = useRef(null);
+            const peerRef = useRef(null);
+            const connRef = useRef(null);
+            const adminConns = useRef([]);
+            const connectedSquadsRef = useRef([]); 
+            const finishedSquadsRef = useRef([]);
+            const startTimeRef = useRef(null);
+            const playlistRef = useRef([...AUDIO_PLAYLIST].sort(() => Math.random() - 0.5));
+            const currentTrackIdx = useRef(0);
+
+            // Función centralizada de SFX con validación de contexto
+            const playSFX = (type) => {
+                getAudioContext(); // Intentar despertar el contexto
+                if (isMuted) return;
+                synthSFX(type, volume);
+            };
+
+            // Inicialización de música de fondo (SOLO ADMIN)
+            const initMusic = () => {
+                getAudioContext(); // Crítico: Despertar AudioContext en interacción de usuario
+                if (audioRef.current) return;
+                
+                const playTrack = () => {
+                    const track = playlistRef.current[currentTrackIdx.current];
+                    const audio = new Audio(track);
+                    audio.volume = volume; // Asegurar que el volumen inicial se aplica
+                    
+                    audio.onended = () => {
+                        currentTrackIdx.current = (currentTrackIdx.current + 1) % playlistRef.current.length;
+                        playTrack();
+                    };
+                    
+                    audio.onerror = (e) => {
+                        console.warn("Error reproduciendo pista, saltando...", e);
+                        currentTrackIdx.current = (currentTrackIdx.current + 1) % playlistRef.current.length;
+                        setTimeout(playTrack, 1000);
+                    };
+
+                    audioRef.current = audio;
+                    // Play immediately to establish the stream
+                    audio.play().catch(e => console.log("Autoplay prevenido por navegador, esperando clic:", e));
+                };
+                
+                playTrack();
+                setIsMuted(false); // Forzar unmute para que el admin escuche sin tocar controles
+            };
+
+            useEffect(() => {
+                if (audioRef.current) {
+                    audioRef.current.volume = volume;
+                    if (isMuted) audioRef.current.pause();
+                    else audioRef.current.play().catch(() => {});
+                }
+            }, [isMuted, volume]);
+
+            useEffect(() => {
+                if (lockout <= 0) return;
+                const timer = setInterval(() => setLockout(p => p - 1), 1000);
+                return () => clearInterval(timer);
+            }, [lockout]);
+
+            const downloadCSV = () => {
+                const blob = new Blob([EXAMPLE_CSV], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = 'mision_ejemplo.csv'; a.click();
+            };
+
+            const handleStartAdmin = (file) => {
+                initMusic(); // Iniciar música para Admin
+                if (!file) return alert("Archivo de misión requerido");
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const lines = e.target.result.trim().split('\n');
+                    const questions = lines.slice(1).map((line, i) => {
+                        const p = line.split(';').map(x => x.trim().replace(/^"|"$/g, ''));
+                        return { id: `q-${i}`, question: p[1], options: [p[2], p[3], p[4], p[5]], correctIndex: (parseInt(p[7]) || 1) - 1, imageUrl: p[8] || null };
+                    }).filter(q => q.question);
+
+                    // ID Numérico de 5 dígitos
+                    const id = Math.floor(10000 + Math.random() * 90000).toString();
+                    
+                    const peer = new Peer(`sr-host-${id}`);
+                    
+                    peer.on('open', () => {
+                        setGameState(s => ({...s, stage: 'admin-lobby', roomId: id, rawQuestions: questions}));
+                    });
+
+                    peer.on('error', (err) => {
+                        console.error("PeerJS Error:", err);
+                        alert("Error de conexión: " + err.type);
+                    });
+
+                    peer.on('connection', c => {
+                        c.on('open', () => {
+                            adminConns.current.push(c);
+                            c.send({type: 'SYNC', taken: connectedSquadsRef.current});
+                        });
+                        c.on('data', d => {
+                            if (d.type === 'REQ') {
+                                if (connectedSquadsRef.current.includes(d.name)) {
+                                    c.send({type:'NO'});
+                                } else {
+                                    c.send({type:'OK'});
+                                    connectedSquadsRef.current = [...connectedSquadsRef.current, d.name];
+                                    setGameState(s => ({...s, connectedSquads: connectedSquadsRef.current}));
+                                    adminConns.current.forEach(conn => {
+                                        if(conn.open) conn.send({type:'SYNC', taken: connectedSquadsRef.current});
+                                    });
+                                }
+                            }
+                            if (d.type === 'FIN') {
+                                const finalTime = Date.now() - startTimeRef.current;
+                                const newFinished = [...finishedSquadsRef.current, {name: d.name, time: finalTime}];
+                                finishedSquadsRef.current = newFinished; 
+                                const rank = newFinished.length; 
+                                
+                                setGameState(s => ({...s, finishedSquads: newFinished}));
+                                c.send({type: 'WIN_DATA', rank: rank, time: finalTime});
+                            }
+                        });
+                        c.on('close', () => {
+                            adminConns.current = adminConns.current.filter(conn => conn !== c);
+                        });
+                    });
+                    peerRef.current = peer;
+                };
+                reader.readAsText(file);
+            };
+
+            const handleConnectSquad = (rid) => {
+                // initMusic() REMOVIDO: Los escuadrones no tienen música de fondo.
+                getAudioContext(); // Solo inicializamos el contexto para SFX.
+                
+                if (!rid) return;
+                const peer = new Peer();
+                peer.on('open', () => {
+                    const c = peer.connect(`sr-host-${rid.toUpperCase()}`);
+                    c.on('open', () => {
+                        connRef.current = c;
+                    });
+                    c.on('data', d => {
+                        if (d.type === 'SYNC') {
+                            setGameState(s => {
+                                const canUpdateStage = s.stage === 'selection' || s.stage === 'squad-selection';
+                                return {
+                                    ...s,
+                                    stage: canUpdateStage ? 'squad-selection' : s.stage,
+                                    takenSquads: d.taken
+                                };
+                            });
+                        }
+                        if (d.type === 'OK') setGameState(s => ({...s, stage: 'squad-lobby'}));
+                        if (d.type === 'NO') {
+                            alert("Esa unidad ya ha sido tomada.");
+                            setGameState(s => ({...s, isSquadSelecting: false, squadAnimal: null}));
+                        }
+                        if (d.type === 'GO') setGameState(s => ({...s, stage: 'squad-intro', sectors: d.sectors}));
+                        if (d.type === 'WIN_DATA') {
+                             setGameState(s => ({
+                                 ...s, 
+                                 stage: 'squad-win', 
+                                 finalRank: d.rank, 
+                                 finalTime: d.time 
+                             }));
+                        }
+                    });
+                });
+                peer.on('error', (err) => {
+                    console.error("PeerJS Error:", err);
+                    alert("Error al conectar: " + err.type);
+                });
+                peerRef.current = peer;
+            };
+
+            const resetGame = () => {
+                if(peerRef.current) peerRef.current.destroy();
+                adminConns.current = [];
+                connectedSquadsRef.current = [];
+                finishedSquadsRef.current = [];
+                setGameState(INITIAL_STATE);
+            };
+
+            if (lockout > 0) return (
+                <div className="fixed inset-0 z-[5000] bg-black animate-alarm flex flex-col items-center justify-center font-mono">
+                    <div className="text-cyber-red text-8xl font-black mb-8 animate-glitch">BLOQUEO</div>
+                    <div className="text-white text-9xl">{lockout}</div>
+                </div>
+            );
+
+            // Determinar si mostrar controles de audio (Solo ADMIN)
+            const showAudioControls = gameState.stage.startsWith('admin');
+
+            const renderContent = () => {
+                switch(gameState.stage) {
+                    case 'selection':
+                        return (
+                            <div className="text-center z-10 px-4 w-full max-w-4xl">
+                                <h1 className="text-7xl md:text-[8rem] font-black text-cyber-green animate-glitch mb-10 uppercase font-mono tracking-tighter leading-none">Scape Room</h1>
+                                
+                                <div className="cyber-border p-12 bg-black/80 backdrop-blur-md shadow-[0_0_50px_rgba(0,255,65,0.1)] mb-12">
+                                    <h2 className="text-3xl text-cyber-blue mb-8 font-black uppercase tracking-[0.2em] border-b border-cyber-blue/30 pb-4">Unirse a la Red</h2>
+                                    <div className="flex flex-col gap-6">
+                                        <input id="landing-room-id" type="number" maxLength={5} placeholder="CÓDIGO DE MISIÓN (ID)" className="w-full bg-black border-2 border-cyber-blue p-6 text-center text-4xl font-black text-white outline-none focus:shadow-[0_0_30px_#00f3ff] transition-all" />
+                                        <button onClick={() => handleConnectSquad(document.getElementById('landing-room-id').value)} className="w-full bg-cyber-blue text-black font-black py-6 text-2xl uppercase hover:bg-white hover:scale-[1.01] transition-all">INICIAR ENLACE</button>
+                                    </div>
+                                    <div className="mt-8">
+                                        <button onClick={downloadCSV} className="text-xs text-gray-500 hover:text-cyber-gold transition-colors font-mono tracking-widest">[ DESCARGAR DATOS EJEMPLO .CSV ]</button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <button onClick={() => setGameState(s => ({...s, stage: 'admin-setup'}))} className="text-cyber-green/50 hover:text-cyber-green text-sm font-bold uppercase tracking-[0.3em] border-b border-transparent hover:border-cyber-green transition-all pb-1">
+                                        // CREAR NUEVA MISIÓN (ADMIN)
+                                    </button>
+                                </div>
+                                <p className="mt-8 text-[10px] text-gray-600 uppercase italic font-mono opacity-50">v1.2.4 // AUDIO SYSTEMS ONLINE</p>
+                            </div>
+                        );
+                    case 'admin-setup':
+                        return (
+                            <div className="cyber-border p-10 bg-black max-w-lg w-full z-10 relative">
+                                <h2 className="text-3xl text-cyber-green mb-10 font-black uppercase border-b border-cyber-green/30 pb-4">Configurar Misión</h2>
+                                <div className="mb-8">
+                                    <label className="block text-cyber-blue text-sm mb-2 font-bold uppercase">Archivo de Preguntas (.CSV)</label>
+                                    <input id="admin-file" type="file" accept=".csv" className="text-xs block w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-cyber-green/20 file:text-cyber-green hover:file:bg-cyber-green/30" />
+                                </div>
+                                <button onClick={() => {
+                                    const file = document.getElementById('admin-file').files[0];
+                                    handleStartAdmin(file);
+                                }} className="w-full bg-cyber-green text-black font-black py-5 text-xl uppercase hover:scale-[1.02] transition-transform shadow-[0_0_20px_rgba(0,255,65,0.2)]">Establecer Nodo</button>
+                                <button onClick={resetGame} className="w-full mt-6 text-xs text-gray-600 uppercase hover:text-white transition-colors">Cancelar y Volver</button>
+                            </div>
+                        );
+                    case 'admin-lobby':
+                        return (
+                            <div className="flex flex-col items-center z-10 w-full max-w-5xl px-4">
+                                <p className="text-cyber-blue text-sm uppercase tracking-widest mb-4 font-mono">COMPARTIR ID CON ESCUADRONES</p>
+                                <div className="huge-text font-black text-cyber-green border-4 border-cyber-green px-12 py-10 bg-cyber-green/5 mb-16 shadow-[0_0_50px_rgba(0,255,65,0.2)] tracking-wider">{gameState.roomId}</div>
+                                <div className="grid md:grid-cols-2 gap-8 w-full">
+                                    <div className="cyber-border p-8 bg-black/80 font-mono h-64 overflow-y-auto">
+                                        <h3 className="text-cyber-blue uppercase mb-6 font-bold text-sm sticky top-0 bg-black pb-2 border-b border-cyber-blue/20">Unidades Conectadas: {gameState.connectedSquads.length}</h3>
+                                        <div className="flex flex-wrap gap-3">{gameState.connectedSquads.map(s => <div key={s} className="px-4 py-2 border border-cyber-green bg-cyber-green/10 text-xl font-bold animate-pulse">{s}</div>)}</div>
+                                    </div>
+                                    <button onClick={() => {
+                                        playSFX('access');
+                                        startTimeRef.current = Date.now();
+                                        
+                                        // Generar sectores únicos y mezclados para cada escuadrón conectado
+                                        adminConns.current.forEach(c => {
+                                            const shuffled = [...gameState.rawQuestions].sort(() => Math.random() - 0.5);
+                                            const sectors = [1,2,3,4,5].map(i => ({
+                                                id: i, questions: shuffled.slice((i-1)*4, i*4), isSolved: false, accessCode: Math.floor(Math.random()*90+10).toString()
+                                            }));
+                                            c.send({type:'GO', sectors});
+                                        });
+
+                                        // Para el monitor del admin, usamos un set genérico (aunque no se use en detalle)
+                                        setGameState(s => ({...s, stage: 'admin-monitor', sectors: []}));
+                                    }} disabled={gameState.connectedSquads.length === 0} className={`w-full h-full text-5xl font-black uppercase transition-all ${gameState.connectedSquads.length > 0 ? 'bg-cyber-green text-black shadow-[0_0_40px_#00ff41] hover:bg-white' : 'bg-gray-900 text-gray-700 cursor-not-allowed border border-gray-800'}`}>INICIAR MISIÓN</button>
+                                </div>
+                            </div>
+                        );
+                    case 'squad-selection':
+                        return (
+                            <div className="z-10 w-full max-w-6xl px-4 text-center">
+                                <h2 className="text-4xl text-cyber-blue mb-16 font-black uppercase tracking-widest font-mono">Selección de Unidad Operativa</h2>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                    {SQUADS.map(s => {
+                                        const isTaken = gameState.takenSquads.includes(s.name);
+                                        const isSelected = gameState.squadAnimal === s.name;
+                                        
+                                        let btnClass = "cyber-border p-8 flex flex-col items-center gap-4 transition-all duration-500 ";
+                                        if (gameState.isSquadSelecting) {
+                                            if (isSelected) btnClass += "opacity-100 scale-110 border-cyber-blue bg-cyber-blue/10 shadow-[0_0_30px_#00f3ff] z-20";
+                                            else btnClass += "opacity-10 grayscale scale-90 blur-sm";
+                                        } else {
+                                            if (isTaken) btnClass += "opacity-20 grayscale cursor-not-allowed border-gray-800";
+                                            else btnClass += "hover:border-cyber-blue hover:scale-105 hover:bg-cyber-blue/5 cursor-pointer";
+                                        }
+
+                                        return (
+                                            <button key={s.name} 
+                                                disabled={gameState.isSquadSelecting || isTaken} 
+                                                onClick={() => {
+                                                    playSFX('click');
+                                                    setGameState(prev => ({...prev, isSquadSelecting: true, squadAnimal: s.name}));
+                                                    if(connRef.current) connRef.current.send({type:'REQ', name:s.name});
+                                                }}
+                                                className={btnClass}>
+                                                <span className="text-7xl mb-2 filter drop-shadow-[0_0_10px_rgba(0,255,65,0.5)]">{s.icon}</span>
+                                                <span className={`font-bold uppercase tracking-widest ${isTaken && !isSelected ? 'line-through' : ''}`}>
+                                                    {isTaken && !isSelected ? 'BLOQUEADO' : s.name}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                
+                                {gameState.isSquadSelecting && (
+                                    <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-2xl px-6">
+                                        <div className="bg-black/90 border-2 border-cyber-blue p-6 text-center shadow-[0_0_50px_rgba(0,243,255,0.3)] backdrop-blur-md animate-pulse">
+                                            <div className="text-cyber-blue text-2xl font-black uppercase font-mono tracking-widest mb-2">VERIFICANDO ENLACE: {gameState.squadAnimal}</div>
+                                            <div className="w-full bg-gray-900 h-1 mt-2 overflow-hidden">
+                                                <div className="h-full bg-cyber-blue w-1/3 animate-[shimmer_1s_infinite_linear]"></div>
+                                            </div>
+                                            <p className="text-white text-[10px] mt-2 opacity-70 uppercase tracking-[0.5em] font-mono">Esperando confirmación del servidor central...</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    case 'squad-lobby':
+                        return (
+                            <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-6 text-center">
+                                <div className="scan-animation"></div>
+                                <div className="text-[12rem] mb-12 animate-pulse">📡</div>
+                                <h2 className="text-5xl font-black text-cyber-green mb-6 uppercase max-w-4xl leading-tight">ESPERANDO SEÑAL DEL MANDO CENTRAL</h2>
+                                <p className="text-cyber-blue font-mono text-sm tracking-widest uppercase opacity-50">UNIDAD {gameState.squadAnimal?.toUpperCase()} EN LÍNEA</p>
+                            </div>
+                        );
+                    case 'squad-intro':
+                        return (
+                            <div className="cyber-border max-w-3xl p-16 bg-cyber-dark z-10">
+                                <Typewriter text={`>>> OBJETIVO: HACKEO RED HYDRA.\n>>> UNIDAD: ${gameState.squadAnimal?.toUpperCase()}\n>>> MISIÓN: DESBLOQUEAR 5 SECTORES.\n>>> CIFRADO DE SALIDA: REQUERIDO.\n\nSISTEMA LISTO.`} className="text-2xl text-cyber-green whitespace-pre-wrap mb-12 font-bold font-mono" />
+                                <button onClick={() => setGameState(s => ({...s, stage: 'squad-game'}))} className="px-16 py-6 bg-cyber-green text-black font-black uppercase text-2xl shadow-[0_0_20px_#00ff41]">INFILTRARSE</button>
+                            </div>
+                        );
+                    case 'squad-game':
+                        const active = gameState.sectors.find(s => s.id === activeSectorId);
+                        return (
+                            <div className="min-h-screen w-full flex flex-col lg:flex-row gap-8 p-10 z-10 bg-matrix">
+                                <div className="flex-1 flex flex-col gap-8">
+                                    <header className="cyber-border bg-black p-6 flex justify-between items-center shadow-lg">
+                                        <h1 className="text-3xl font-black text-cyber-green font-mono uppercase">AGENTE_{gameState.squadAnimal?.toUpperCase()}</h1>
+                                        <div className="flex gap-4">
+                                            {[1,2,3,4,5].map(i => <div key={i} className={`w-3 h-3 rounded-full ${gameState.sectors.find(s=>s.id===i)?.isSolved ? 'led-green' : 'bg-gray-800 animate-pulse'}`}></div>)}
+                                        </div>
+                                    </header>
+                                    <div className="grid md:grid-cols-3 gap-6 flex-1">
+                                        {gameState.sectors.map(s => (
+                                            <div key={s.id} onClick={() => !s.isSolved && setActiveSectorId(s.id)} className={`cyber-border p-8 cursor-pointer transition-all ${s.isSolved ? 'bg-cyber-green/10 border-cyber-green' : 'hover:border-cyber-blue hover:bg-cyber-blue/5'}`}>
+                                                <div className="text-[10px] text-cyber-blue mb-4 font-bold uppercase">Sector_{s.id.toString().padStart(2,'0')}</div>
+                                                <div className="text-7xl text-center font-black font-mono">{s.isSolved ? s.accessCode : '??'}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="lg:w-96 flex">
+                                    <div className="cyber-border p-8 bg-black flex-1 flex flex-col shadow-2xl">
+                                        <h2 className="text-xl text-cyber-blue font-black mb-10 border-b border-cyber-blue/20 pb-4 text-center uppercase tracking-widest">Bóveda Hydra</h2>
+                                        {/* Ajuste de inputs */}
+                                        <div className="grid grid-cols-5 gap-2 mb-10">
+                                            {vaultCodes.map((v, i) => (
+                                                <input key={i} maxLength={2} value={v} onChange={e => {
+                                                    const n = [...vaultCodes]; n[i] = e.target.value; setVaultCodes(n);
+                                                }} className="vault-input font-mono font-black rounded-sm" placeholder="--" />
+                                            ))}
+                                        </div>
+                                        <button onClick={() => {
+                                            if(gameState.sectors.every((s, i) => vaultCodes[i] === s.accessCode)) {
+                                                playSFX('success');
+                                                if(connRef.current) connRef.current.send({type:'FIN', name:gameState.squadAnimal});
+                                                setGameState(s => ({...s, isLoadingRank: true}));
+                                            } else {
+                                                playSFX('error'); setLockout(10);
+                                            }
+                                        }} disabled={gameState.isLoadingRank} className="w-full bg-cyber-blue text-black font-black py-6 text-2xl uppercase shadow-[0_0_30px_#00f3ff] hover:bg-white transition-all disabled:opacity-50">
+                                            {gameState.isLoadingRank ? 'SUBIENDO DATOS...' : 'CONFIRMAR'}
+                                        </button>
+                                    </div>
+                                </div>
+                                {active && (
+                                    <SectorModal 
+                                        sector={active} 
+                                        playSFX={playSFX}
+                                        onSolved={(id) => {
+                                            playSFX('success');
+                                            setGameState(s => ({...s, sectors: s.sectors.map(sec => sec.id === id ? {...sec, isSolved: true} : sec)}));
+                                            setActiveSectorId(null);
+                                        }}
+                                        onLocked={() => { playSFX('error'); setActiveSectorId(null); setLockout(10); }}
+                                    />
+                                )}
+                            </div>
+                        );
+                    case 'squad-win':
+                        return (
+                            <div className="text-center z-10 px-6 w-full max-w-4xl">
+                                <h2 className="text-6xl md:text-8xl font-black text-cyber-green mb-8 animate-glitch uppercase font-mono tracking-tighter">MISIÓN CUMPLIDA</h2>
+                                
+                                <div className="grid md:grid-cols-2 gap-8 mb-12">
+                                    <div className="cyber-border p-10 bg-black/50 flex flex-col items-center justify-center">
+                                        <div className="text-cyber-blue text-sm uppercase tracking-widest mb-2">TIEMPO TOTAL</div>
+                                        <div className="text-6xl font-black text-white font-mono">{formatTime(gameState.finalTime)}</div>
+                                    </div>
+                                    <div className="cyber-border p-10 bg-black/50 flex flex-col items-center justify-center relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-cyber-gold/10 animate-pulse"></div>
+                                        <div className="text-cyber-gold text-sm uppercase tracking-widest mb-2 relative z-10">CLASIFICACIÓN</div>
+                                        <div className="text-6xl font-black text-cyber-gold font-mono relative z-10">
+                                            #{gameState.finalRank}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button onClick={resetGame} className="px-16 py-6 border-4 border-cyber-green text-cyber-green font-black text-3xl uppercase hover:bg-cyber-green hover:text-black transition-all shadow-[0_0_30px_rgba(0,255,65,0.3)]">NUEVA INFILTRACIÓN</button>
+                            </div>
+                        );
+                    case 'admin-monitor':
+                        return (
+                            <div className="w-full h-screen p-10 z-10 flex flex-col bg-cyber-dark bg-matrix">
+                                <header className="flex justify-between items-center border-b border-cyber-green/20 pb-8 mb-16">
+                                    <h1 className="text-5xl font-black text-cyber-green font-mono uppercase tracking-tighter">CENTRO DE CONTROL HYDRA</h1>
+                                    <button onClick={resetGame} className="px-10 py-4 border border-cyber-red text-cyber-red font-black uppercase hover:bg-cyber-red hover:text-white transition-all">TERMINAR SESIÓN</button>
+                                </header>
+                                <div className="grid md:grid-cols-2 gap-12 flex-1 overflow-hidden">
+                                    <div className="cyber-border p-8 bg-black/50 overflow-y-auto relative">
+                                        <div className="absolute top-0 right-0 p-2 text-[10px] text-cyber-gold font-mono">LIVE FEED</div>
+                                        <h2 className="text-cyber-gold text-2xl mb-10 font-black uppercase border-b border-cyber-gold/20 pb-4 tracking-widest">RANKING EN TIEMPO REAL</h2>
+                                        <div className="space-y-4">
+                                            {gameState.finishedSquads.map((s, i) => (
+                                                <div key={i} className="flex items-center justify-between p-6 border-l-4 border-cyber-gold bg-cyber-gold/5 text-4xl font-black uppercase">
+                                                    <div className="flex items-center gap-6">
+                                                        <span className="text-cyber-gold/50">#{i + 1}</span>
+                                                        <span>{s.name}</span>
+                                                    </div>
+                                                    <span className="text-white font-mono text-3xl">{formatTime(s.time)}</span>
+                                                </div>
+                                            ))}
+                                            {gameState.finishedSquads.length === 0 && <p className="text-gray-700 text-center py-20 animate-pulse uppercase tracking-[0.3em] font-mono">Esperando confirmaciones de extracción...</p>}
+                                        </div>
+                                    </div>
+                                    <div className="cyber-border p-8 bg-black/50">
+                                        <h2 className="text-cyber-blue text-2xl mb-10 font-black uppercase border-b border-cyber-blue/20 pb-4 tracking-widest">ESTADO DE UNIDADES</h2>
+                                        <div className="space-y-4">
+                                            {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f => f.name === s)).map(s => (
+                                                <div key={s} className="p-6 text-3xl font-black bg-cyber-blue/10 border-l-[12px] border-cyber-blue uppercase font-mono flex justify-between items-center">
+                                                    <span>{s}</span>
+                                                    <span className="text-xs text-cyber-blue animate-pulse">HACKEANDO...</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    default: return <div className="text-4xl text-cyber-green">RELOADING...</div>;
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center relative bg-matrix overflow-hidden">
+                    {showAudioControls && (
+                        <div className="fixed top-8 right-8 z-[3000] flex flex-col items-end gap-3 group">
+                            <div className="bg-black/90 border border-cyber-green p-5 rounded opacity-0 group-hover:opacity-100 transition-all shadow-xl">
+                                <input type="range" min="0" max="1" step="0.01" value={volume} onChange={e => setVolume(parseFloat(e.target.value))} className="w-32 cursor-pointer" />
+                            </div>
+                            <button onClick={() => {
+                                getAudioContext(); // Ensure context is live
+                                if (!audioRef.current) initMusic();
+                                setIsMuted(!isMuted);
+                            }} className={`w-14 h-14 border-2 flex items-center justify-center text-2xl transition-all ${isMuted ? 'border-cyber-red text-cyber-red' : 'border-cyber-green text-cyber-green shadow-[0_0_15px_#00ff41]'}`}>
+                                {isMuted ? '🔇' : '🔊'}
+                            </button>
+                        </div>
+                    )}
+                    {renderContent()}
+                </div>
+            );
+        }
+
+        const SectorModal = ({ sector, onSolved, onLocked, playSFX }) => {
             const [qIndex, setQIndex] = useState(0);
             const [selected, setSelected] = useState(null);
             const [feedback, setFeedback] = useState('neutral');
             const [shuffledOptions, setShuffledOptions] = useState([]);
+            
             const currentQ = sector.questions[qIndex];
 
+            // Mezclar opciones al cargar pregunta
             useEffect(() => {
                 if (currentQ) {
-                    const optionsWithMeta = currentQ.options.map((text, i) => ({
-                        text,
-                        isCorrect: i === currentQ.correctIndex
-                    }));
-                    const copy = [...optionsWithMeta];
-                    for (let i = copy.length - 1; i > 0; i--) {
+                    const options = [...currentQ.options];
+                    for (let i = options.length - 1; i > 0; i--) {
                         const j = Math.floor(Math.random() * (i + 1));
-                        [copy[i], copy[j]] = [copy[j], copy[i]];
+                        [options[i], options[j]] = [options[j], options[i]];
                     }
-                    setShuffledOptions(copy);
-                    setSelected(null);
-                    setFeedback('neutral');
+                    setShuffledOptions(options);
                 }
             }, [currentQ]);
 
             const handleSelect = (idx) => {
                 if (selected !== null) return;
                 setSelected(idx);
-                if (shuffledOptions[idx].isCorrect) {
-                    setFeedback('correct');
+
+                // Validamos comparando el texto de la opción seleccionada con la respuesta correcta original
+                const selectedText = shuffledOptions[idx];
+                const correctText = currentQ.options[currentQ.correctIndex];
+
+                if (selectedText === correctText) {
+                    playSFX('success'); setFeedback('correct');
                     setTimeout(() => {
-                        if (qIndex + 1 < sector.questions.length) setQIndex(prev => prev + 1);
+                        if (qIndex + 1 < sector.questions.length) { setQIndex(p => p+1); setSelected(null); setFeedback('neutral'); }
                         else onSolved(sector.id);
                     }, 800);
                 } else {
-                    setFeedback('wrong');
+                    playSFX('error'); setFeedback('wrong');
                     setTimeout(() => onLocked(), 1000);
                 }
             };
 
             if (!currentQ) return null;
-
             return (
                 <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm">
-                    <div className="cyber-border w-full max-w-2xl p-8 bg-cyber-dark shadow-[0_0_60px_rgba(0,255,65,0.2)]">
-                        <div className="corner"></div>
-                        <div className="flex justify-between items-center mb-6 border-b border-cyber-green/30 pb-4">
-                            <h3 className="text-xl text-cyber-green font-black uppercase tracking-widest font-mono">
-                                NODO 0{sector.id} // SECCIÓN {qIndex + 1}/4
-                            </h3>
-                            <div className="flex gap-1">
-                                {[0,1,2,3].map(i => <div key={i} className={`w-3 h-3 rounded-full ${i < qIndex ? 'led-green' : i === qIndex ? 'led-blue animate-pulse' : 'bg-gray-800'}`}></div>)}
+                    <div className="cyber-border w-full max-w-3xl p-10 bg-cyber-dark shadow-[0_0_100px_rgba(0,255,65,0.2)]">
+                        <div className="mb-8 w-full">
+                            <div className="flex justify-between items-end mb-2">
+                                <h3 className="text-3xl text-cyber-green font-black uppercase font-mono tracking-widest leading-none">SECTOR_0{sector.id}</h3>
+                                <span className="text-cyber-green/60 font-mono text-xs tracking-widest">SECUENCIA_DE_NODO</span>
                             </div>
+                            
+                            {/* Barra de Progreso Gráfica */}
+                            <div className="flex gap-1 w-full h-3">
+                                {sector.questions.map((_, i) => {
+                                    const status = i < qIndex ? 'done' : (i === qIndex ? 'active' : 'pending');
+                                    return (
+                                        <div key={i} className={`flex-1 relative transition-all duration-300 transform skew-x-[-20deg] border
+                                            ${status === 'done' ? 'bg-cyber-green border-cyber-green shadow-[0_0_8px_#00ff41]' : ''}
+                                            ${status === 'active' ? 'bg-cyber-blue/20 border-cyber-blue shadow-[0_0_10px_#00f3ff] animate-pulse' : ''}
+                                            ${status === 'pending' ? 'bg-transparent border-gray-800 opacity-30' : ''}
+                                        `}>
+                                            {/* Indicador de posición actual */}
+                                            {status === 'active' && (
+                                                 <div className="absolute -top-5 left-0 w-full text-center text-[10px] text-cyber-blue font-bold tracking-wider skew-x-[20deg]">
+                                                    {i + 1}/{sector.questions.length}
+                                                 </div>
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                            <div className="h-px w-full bg-gradient-to-r from-cyber-green/0 via-cyber-green/50 to-cyber-green/0 mt-4"></div>
                         </div>
-                        {currentQ.imageUrl && <img src={currentQ.imageUrl} className="w-full h-48 object-cover mb-6 border border-cyber-green/30 grayscale contrast-125" />}
-                        <p className="text-2xl text-white mb-10 leading-relaxed font-bold font-mono">{currentQ.question}</p>
-                        <div className="grid gap-4">
+
+                        {currentQ.imageUrl && <img src={currentQ.imageUrl} className="w-full h-56 object-cover mb-8 border border-cyber-green/30 grayscale contrast-125 shadow-lg" />}
+                        <p className="text-3xl text-white mb-12 leading-relaxed font-black font-mono">{currentQ.question}</p>
+                        <div className="grid gap-5">
                             {shuffledOptions.map((opt, i) => (
-                                <button key={i} onClick={() => handleSelect(i)} disabled={selected !== null} className={`p-5 text-left border-2 transition-all font-bold tracking-wider ${selected === i ? (feedback === 'correct' ? 'bg-cyber-green text-black border-white scale-95' : 'bg-cyber-red text-white border-white animate-shake') : (selected !== null ? 'opacity-50 border-gray-800 text-gray-700' : 'border-cyber-green/20 text-cyber-green hover:border-cyber-green hover:bg-cyber-green/10')}`}>
-                                    <span className="opacity-50 mr-2 text-sm font-mono">{">"}</span>{opt.text}
-                                </button>
+                                <button key={i} onClick={() => handleSelect(i)} disabled={selected !== null} className={`p-6 text-left border-2 transition-all font-black text-xl font-mono ${selected === i ? (feedback === 'correct' ? 'bg-cyber-green text-black border-white' : 'bg-cyber-red text-white border-white animate-shake') : (selected !== null ? 'opacity-30' : 'border-cyber-green/20 text-cyber-green hover:border-cyber-green hover:bg-cyber-green/10 hover:translate-x-2')}`}>{opt}</button>
                             ))}
                         </div>
                     </div>
                 </div>
             );
         };
-
-        const AudioControl = ({ volume, setVolume, isMuted, setIsMuted }) => (
-            <div className="fixed top-6 right-6 z-[3000] flex flex-col items-end gap-3 group">
-                <div className="bg-black/90 border-2 border-cyber-green/40 p-5 rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-[0_0_30px_rgba(0,255,65,0.2)] translate-x-4 group-hover:translate-x-0">
-                    <div className="flex flex-col items-center gap-4">
-                        <input type="range" min="0" max="1" step="0.01" value={volume} onChange={e => setVolume(parseFloat(e.target.value))} className="w-32 cursor-pointer" />
-                        <span className="text-xs font-black text-cyber-green tracking-tighter font-mono">{Math.round(volume * 100)}% VOL</span>
-                    </div>
-                </div>
-                <button onClick={() => setIsMuted(!isMuted)} className={`w-12 h-12 rounded-sm border-2 flex items-center justify-center text-xl transition-all ${isMuted ? 'border-cyber-red text-cyber-red' : 'border-cyber-green text-cyber-green shadow-[0_0_15px_#00ff41]'}`}>{isMuted ? '×' : '∽'}</button>
-            </div>
-        );
-
-        function App() {
-            const [gameState, setGameState] = useState(INITIAL_STATE);
-            const [volume, setVolume] = useState(0.3);
-            const [isMuted, setIsMuted] = useState(true);
-            const [activeSectorId, setActiveSectorId] = useState(null);
-            const [vaultCodes, setVaultCodes] = useState(['','','','','']);
-            const [keywordInput, setKeywordInput] = useState('');
-            const [csvFile, setCsvFile] = useState(null);
-            const [joinRoomId, setJoinRoomId] = useState('');
-            const [isConnecting, setIsConnecting] = useState(false);
-            const [isSquadSelecting, setIsSquadSelecting] = useState(false);
-            const [lockout, setLockout] = useState(0);
-            
-            const audioRef = useRef(null);
-            const peerRef = useRef(null);
-            const connRef = useRef(null);
-            const adminConns = useRef([]);
-            const startTimeRef = useRef(null);
-            const gameStateRef = useRef(gameState);
-
-            useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
-            useEffect(() => {
-                if (lockout <= 0) return;
-                const timer = setInterval(() => setLockout(p => p - 1), 1000);
-                return () => clearInterval(timer);
-            }, [lockout]);
-            useEffect(() => {
-                audioRef.current = new Audio(MUSIC_URL);
-                audioRef.current.loop = true;
-                return () => { if(audioRef.current) audioRef.current.pause(); };
-            }, []);
-            useEffect(() => {
-                if (!audioRef.current) return;
-                audioRef.current.volume = volume;
-                if(isMuted) audioRef.current.pause(); else audioRef.current.play().catch(() => {});
-            }, [isMuted, volume]);
-
-            const startAdmin = () => {
-                if (!keywordInput || !csvFile) return alert("PALABRA MAESTRA Y CSV REQUERIDOS");
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const questions = parseCSV(e.target.result);
-                    const id = Math.random().toString(36).substring(2, 7).toUpperCase();
-                    const peer = new Peer(`sr-host-${id}`);
-                    peer.on('open', () => setGameState(s => ({...s, stage: 'admin-lobby', roomId: id, adminKeyword: keywordInput.toUpperCase(), rawQuestions: questions})));
-                    peer.on('connection', c => {
-                        c.on('open', () => { 
-                            adminConns.current.push(c); 
-                            c.send({type: 'SYNC', taken: gameStateRef.current.connectedSquads}); 
-                        });
-                        c.on('data', d => {
-                            if (d.type === 'REQ') {
-                                setGameState(s => {
-                                    if (s.connectedSquads.includes(d.name)) { c.send({type:'NO'}); return s; }
-                                    c.send({type:'OK'});
-                                    const newSquads = [...s.connectedSquads, d.name];
-                                    adminConns.current.forEach(conn => conn.send({type:'SYNC', taken: newSquads}));
-                                    return {...s, connectedSquads: newSquads};
-                                });
-                            }
-                            if (d.type === 'FIN') setGameState(s => ({...s, finishedSquads: [...s.finishedSquads, {name: d.name, time: Date.now() - startTimeRef.current}]}));
-                        });
-                    });
-                    peerRef.current = peer;
-                };
-                reader.readAsText(csvFile);
-            };
-
-            const connectSquad = () => {
-                if (!joinRoomId) return;
-                setIsConnecting(true);
-                const peer = new Peer();
-                peer.on('open', () => {
-                    const c = peer.connect(`sr-host-${joinRoomId.toUpperCase()}`);
-                    c.on('open', () => connRef.current = c);
-                    c.on('data', d => {
-                        if (d.type === 'SYNC') { setGameState(s => ({...s, stage: 'squad-selection', takenSquads: d.taken})); setIsConnecting(false); }
-                        if (d.type === 'OK') setGameState(s => ({...s, stage: 'squad-lobby'}));
-                        if (d.type === 'GO') setGameState(s => ({...s, stage: 'squad-intro', adminKeyword: d.kw, sectors: d.sectors}));
-                    });
-                    c.on('error', () => { alert("NODO NO ENCONTRADO"); setIsConnecting(false); });
-                });
-                peerRef.current = peer;
-            };
-
-            const launchMission = () => {
-                startTimeRef.current = Date.now();
-                const shuffled = [...gameState.rawQuestions].sort(() => Math.random() - 0.5);
-                const sectors = [1,2,3,4,5].map(i => {
-                    const startIdx = (i - 1) * 4;
-                    let sq = shuffled.slice(startIdx, startIdx + 4);
-                    while (sq.length < 4) sq.push(shuffled[Math.floor(Math.random() * shuffled.length)]);
-                    return { id: i, questions: sq, isSolved: false, accessCode: Math.floor(Math.random()*90+10).toString() };
-                });
-                adminConns.current.forEach(c => c.send({type:'GO', kw: gameState.adminKeyword, sectors}));
-                setGameState(s => ({...s, stage: 'admin-monitor'}));
-            };
-
-            const formatTime = (ms) => {
-                const s = Math.floor(ms / 1000);
-                return `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
-            };
-
-            const resetGame = () => {
-                if(peerRef.current) peerRef.current.destroy();
-                adminConns.current = [];
-                setGameState(INITIAL_STATE);
-                setVaultCodes(['','','','','']);
-                setKeywordInput('');
-                setJoinRoomId('');
-                setActiveSectorId(null);
-                setIsSquadSelecting(false);
-            };
-
-            if (lockout > 0) return (
-                <div className="fixed inset-0 z-[5000] bg-black animate-alarm flex flex-col items-center justify-center text-center p-4">
-                    <div className="text-cyber-red text-6xl md:text-8xl font-black mb-8 glitch-effect animate-glitch uppercase tracking-tighter font-mono">SISTEMA BLOQUEADO</div>
-                    <div className="text-white text-xl md:text-2xl font-bold uppercase tracking-[0.5em] mb-12 font-mono">Protocolo de Purga en curso...</div>
-                    <div className="text-cyber-red text-[12rem] font-black leading-none tabular-nums animate-pulse font-mono">{lockout}</div>
-                </div>
-            );
-
-            if (gameState.stage === 'selection') return (
-                <div className="min-h-screen flex items-center justify-center relative bg-matrix">
-                    <AudioControl volume={volume} setVolume={setVolume} isMuted={isMuted} setIsMuted={setIsMuted} />
-                    <div className="absolute inset-0 bg-black/60"></div>
-                    <div className="z-10 text-center px-4 w-full max-w-4xl">
-                        <h1 className="text-7xl md:text-[11rem] font-black text-cyber-green glitch-effect animate-glitch mb-12 uppercase tracking-tighter leading-none font-mono">Scape room</h1>
-                        <div className="flex flex-col md:flex-row gap-6 justify-center mt-12">
-                            <button onClick={() => setGameState(s => ({...s, stage: 'admin-setup'}))} className="cyber-border px-10 py-5 text-xl font-black uppercase hover:bg-cyber-green hover:text-black transition-all font-mono">Administrador <div className="corner"></div></button>
-                            <button onClick={() => setGameState(s => ({...s, stage: 'squad-setup'}))} className="cyber-border border-cyber-blue text-cyber-blue px-10 py-5 text-xl font-black uppercase hover:bg-cyber-blue hover:text-black transition-all font-mono">Escuadrón <div className="corner" style={{borderColor:'#00f3ff'}}></div></button>
-                        </div>
-                        <div className="mt-20"><button onClick={downloadExampleCSV} className="text-cyber-gold text-[10px] font-black uppercase tracking-[0.4em] border border-cyber-gold/20 px-4 py-2 hover:bg-cyber-gold/10 transition-all opacity-60 hover:opacity-100 font-mono">[ Descargar Banco de Datos ]</button></div>
-                    </div>
-                </div>
-            );
-
-            if (gameState.stage === 'admin-setup') return (
-                <div className="min-h-screen flex items-center justify-center p-6 bg-matrix">
-                    <div className="cyber-border max-w-lg w-full p-8 md:p-12 bg-black shadow-[0_0_50px_rgba(0,255,65,0.1)]">
-                        <div className="corner"></div>
-                        <h2 className="text-2xl text-cyber-green mb-10 font-black uppercase tracking-widest border-b border-cyber-green/20 pb-4 font-mono">Protocolo de Enlace</h2>
-                        <div className="space-y-8">
-                            <div className="w-full">
-                                <label className="block text-cyber-blue text-[10px] uppercase mb-3 font-black tracking-widest font-mono">Keyword Maestra (Capa de Cifrado Final)</label>
-                                <input 
-                                    type="password" 
-                                    value={keywordInput} 
-                                    onChange={e => setKeywordInput(e.target.value)} 
-                                    className="admin-keyword-input"
-                                    placeholder="INTRODUCIR CLAVE..."
-                                />
-                            </div>
-                            <div className="w-full">
-                                <label className="block text-cyber-blue text-[10px] uppercase mb-3 font-black tracking-widest font-mono">Protocolos de Misión (.CSV)</label>
-                                <input type="file" accept=".csv" onChange={e => setCsvFile(e.target.files[0])} className="w-full text-[10px] text-gray-500 font-black file:bg-cyber-green/10 file:text-cyber-green file:border file:border-cyber-green file:px-4 file:py-2 file:rounded-none file:mr-4 file:uppercase hover:file:bg-cyber-green hover:file:text-black transition-all font-mono" />
-                            </div>
-                            <button onClick={startAdmin} className="w-full bg-cyber-green text-black font-black py-5 text-xl uppercase shadow-[0_0_25px_rgba(0,255,65,0.4)] hover:scale-[1.02] transition-transform font-mono">Establecer Frecuencia</button>
-                            <button onClick={() => setGameState(s => ({...s, stage: 'selection'}))} className="w-full text-center text-[10px] text-gray-600 uppercase font-black tracking-widest font-mono">Abortar Operación</button>
-                        </div>
-                    </div>
-                </div>
-            );
-
-            if (gameState.stage === 'admin-lobby') return (
-                <div className="min-h-screen p-10 flex flex-col items-center bg-black">
-                    <p className="text-cyber-blue text-sm uppercase tracking-[1em] mb-4 font-black font-mono">ID DE FRECUENCIA</p>
-                    <div className="huge-text font-black text-cyber-green animate-pulse-soft border-4 border-cyber-green/50 px-12 py-8 bg-cyber-green/5 mb-16 shadow-[0_0_40px_rgba(0,255,65,0.1)] font-mono">{gameState.roomId}</div>
-                    <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8">
-                        <div className="cyber-border p-8 bg-cyber-dark">
-                            <h3 className="text-cyber-blue uppercase mb-6 font-black text-xs tracking-widest font-mono">Unidades Sincronizadas</h3>
-                            <div className="flex flex-wrap gap-3 font-mono">{gameState.connectedSquads.map(s => <div key={s} className="px-5 py-3 border border-cyber-green text-lg font-black uppercase bg-cyber-green/5 shadow-[0_0_10px_rgba(0,255,65,0.2)] font-mono">{s}</div>)}</div>
-                        </div>
-                        <button onClick={launchMission} disabled={gameState.connectedSquads.length === 0} className={`w-full py-10 text-5xl font-black uppercase transition-all font-mono ${gameState.connectedSquads.length > 0 ? 'bg-cyber-green text-black shadow-[0_0_50px_#00ff41] hover:scale-105' : 'bg-gray-800 text-gray-600 cursor-not-allowed'}`}>Lanzar Misión</button>
-                    </div>
-                </div>
-            );
-
-            if (gameState.stage === 'squad-setup') return (
-                <div className="min-h-screen flex flex-col items-center justify-center bg-matrix">
-                    <div className="cyber-border p-12 bg-black/90 text-center max-w-md w-full shadow-[0_0_50px_rgba(0,243,255,0.1)]">
-                        <div className="corner" style={{borderColor:'#00f3ff'}}></div>
-                        <h2 className="text-3xl text-cyber-blue mb-10 uppercase font-black tracking-widest font-mono">Unirse a la Red</h2>
-                        <input type="text" maxLength={5} value={joinRoomId} onChange={e => setJoinRoomId(e.target.value.toUpperCase())} placeholder="-----" className="bg-black border-4 border-cyber-blue p-6 text-center text-2xl mb-10 outline-none uppercase font-black text-white focus:shadow-[0_0_20px_#00f3ff] font-mono w-full" />
-                        <button onClick={connectSquad} className="w-full bg-cyber-blue text-black font-black py-5 text-xl uppercase hover:bg-white transition-all font-mono">{isConnecting ? 'ESTABLECIENDO VÍNCULO...' : 'Conectar'}</button>
-                    </div>
-                </div>
-            );
-
-            if (gameState.stage === 'squad-selection') return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-10 bg-cyber-dark">
-                    <h2 className="text-4xl text-cyber-blue mb-16 uppercase font-black tracking-[0.4em] glitch-effect font-mono">Elegir Unidad Operativa</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl w-full">
-                        {SQUADS.map(s => (
-                            <button 
-                                key={s.name} 
-                                disabled={gameState.takenSquads.includes(s.name) || isSquadSelecting} 
-                                onClick={() => { 
-                                    setIsSquadSelecting(true);
-                                    if(connRef.current) connRef.current.send({type:'REQ', name:s.name}); 
-                                    setGameState(gs => ({...gs, squadAnimal: s.name}));
-                                }} 
-                                className={`cyber-border p-8 flex flex-col items-center gap-4 transition-all group ${gameState.takenSquads.includes(s.name) || isSquadSelecting ? 'opacity-10 grayscale cursor-not-allowed' : 'hover:border-cyber-blue hover:bg-cyber-blue/5 hover:scale-105'}`}
-                            >
-                                <div className="corner" style={{borderColor: (gameState.takenSquads.includes(s.name) || isSquadSelecting) ? '#333' : '#00f3ff'}}></div>
-                                <span className="text-7xl group-hover:animate-float">{s.icon}</span>
-                                <span className="font-black uppercase text-xs tracking-widest border-t border-cyber-blue/20 pt-4 w-full text-center font-mono">{s.name}</span>
-                            </button>
-                        ))}
-                    </div>
-                    {isSquadSelecting && <div className="mt-10 text-cyber-blue animate-pulse font-mono uppercase tracking-widest">Sincronizando con el servidor central...</div>}
-                </div>
-            );
-
-            if (gameState.stage === 'squad-lobby') return (
-                <div className="min-h-screen flex items-center justify-center p-6 bg-black text-center fixed inset-0 z-[4000] overflow-hidden">
-                    <div className="scan-animation absolute inset-0 opacity-10 pointer-events-none"></div>
-                    <div className="cyber-border p-12 md:p-20 bg-cyber-green/5 max-w-4xl w-full shadow-[0_0_100px_rgba(0,255,65,0.1)]">
-                        <div className="corner"></div>
-                        <div className="text-[10rem] mb-12 animate-pulse drop-shadow-[0_0_30px_#00ff41]">📡</div>
-                        <h2 className="text-4xl md:text-5xl font-black text-cyber-green mb-10 uppercase tracking-[0.2em] leading-tight glitch-effect font-mono">
-                            ESPERAR LAS ÓRDENES DEL MANDO SUPERIOR PARA EMPEZAR
-                        </h2>
-                        <div className="flex justify-center gap-4 mb-10">
-                            <div className="w-4 h-4 rounded-full led-green"></div>
-                            <div className="w-4 h-4 rounded-full led-green"></div>
-                            <div className="w-4 h-4 rounded-full bg-gray-800 animate-pulse"></div>
-                        </div>
-                        <p className="text-cyber-blue font-black uppercase text-xs tracking-[0.8em] font-mono opacity-50">Sincronización de unidad en curso...</p>
-                    </div>
-                </div>
-            );
-
-            if (gameState.stage === 'squad-intro') return (
-                <div className="min-h-screen flex items-center justify-center p-10 bg-black">
-                    <div className="cyber-border max-w-3xl p-14 bg-cyber-dark shadow-[0_0_80px_rgba(0,255,65,0.1)]">
-                        <div className="corner"></div>
-                        <Typewriter speed={20} text={`>>> ANALIZANDO OBJETIVO...\n>>> UNIDAD ASIGNADA: ${gameState.squadAnimal ? gameState.squadAnimal.toUpperCase() : '??'}\n>>> MISIÓN: HACKEO DE LA RED CENTRAL HYDRA.\n>>> ESTRUCTURA: 5 SECTORES DE SEGURIDAD.\n>>> REQUISITO: 4 NODOS POR SECTOR.\n\nSISTEMA LISTO PARA INFILTRACIÓN. BUENA SUERTE.`} className="text-xl text-cyber-green whitespace-pre-wrap mb-12 font-black leading-relaxed font-mono" />
-                        <button onClick={() => setGameState(p => ({...p, stage:'squad-game'}))} className="px-16 py-6 bg-cyber-green text-black font-black uppercase text-2xl hover:bg-white transition-all shadow-[0_0_30px_rgba(0,255,65,0.2)] font-mono">Ejecutar Protocolo</button>
-                    </div>
-                </div>
-            );
-
-            if (gameState.stage === 'squad-game') {
-                const active = gameState.sectors.find(s => s.id === activeSectorId);
-                return (
-                    <div className="min-h-screen p-6 md:p-10 flex flex-col lg:flex-row gap-8 bg-cyber-dark overflow-hidden">
-                        <div className="flex-1 flex flex-col gap-8">
-                            <header className="cyber-border bg-black/80 p-6 flex justify-between items-center relative overflow-hidden">
-                                <div className="scan-animation absolute inset-0 pointer-events-none opacity-20"></div>
-                                <div>
-                                    <div className="text-[10px] text-cyber-blue uppercase font-black font-mono tracking-widest">Agente_Activo</div>
-                                    <h1 className="text-3xl font-black text-cyber-green uppercase tracking-tighter font-mono">UNIDAD_{gameState.squadAnimal ? gameState.squadAnimal.toUpperCase() : '??'}</h1>
-                                </div>
-                                <div className="hidden md:flex gap-10">
-                                    <div className="text-right">
-                                        <div className="text-[10px] text-cyber-gold font-black uppercase font-mono tracking-widest">Señal_Red</div>
-                                        <div className="flex gap-1 h-4">
-                                            <div className="w-1.5 h-full led-green"></div>
-                                            <div className="w-1.5 h-full led-green"></div>
-                                            <div className="w-1.5 h-full led-green"></div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-[10px] text-cyber-blue font-black uppercase font-mono tracking-widest">CPU_Load</div>
-                                        <div className="w-24 h-4 bg-gray-900 border border-cyber-blue/30 relative">
-                                            <div className="absolute inset-y-0 left-0 bg-cyber-blue w-2/3 animate-pulse shadow-[0_0_10px_#00f3ff]"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </header>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {gameState.sectors.map((s) => (
-                                    <div key={s.id} onClick={() => !s.isSolved && setActiveSectorId(s.id)} className={`cyber-border p-6 cursor-pointer group transition-all ${s.isSolved ? 'border-cyber-green bg-cyber-green/5' : 'border-cyber-blue/20 hover:border-cyber-blue hover:bg-cyber-blue/5'}`}>
-                                        <div className="flex justify-between mb-4">
-                                            <span className="text-[10px] font-black uppercase font-mono tracking-widest">Sector_0{s.id}</span>
-                                            <span className={`px-2 text-[8px] font-black uppercase font-mono ${s.isSolved ? 'bg-cyber-green text-black' : 'bg-cyber-red/20 text-cyber-red border border-cyber-red animate-pulse'}`}>{s.isSolved ? 'Desbloqueado' : 'Encriptado'}</span>
-                                        </div>
-                                        <div className="flex items-center justify-center h-20 mb-4">
-                                            {s.isSolved ? (
-                                                <div className="text-6xl font-black text-cyber-green drop-shadow-[0_0_15px_#00ff41] font-mono">{s.accessCode}</div>
-                                            ) : (
-                                                <div className="text-5xl font-black text-gray-800 font-mono tracking-widest animate-pulse">??</div>
-                                            )}
-                                        </div>
-                                        <div className="w-full h-1 bg-gray-900">
-                                            <div className={`h-full transition-all duration-1000 ${s.isSolved ? 'w-full bg-cyber-green shadow-[0_0_10px_#00ff41]' : 'w-0'}`}></div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="w-full lg:w-96 flex">
-                            <div className="cyber-border p-8 bg-black/90 relative flex-1 flex flex-col min-h-0">
-                                <div className="corner" style={{borderColor:'#00f3ff'}}></div>
-                                <h2 className="text-xl text-cyber-blue font-black mb-10 uppercase tracking-[0.2em] border-b border-cyber-blue/30 pb-4 font-mono">Bóveda Central</h2>
-                                <div className="grid grid-cols-5 gap-3 mb-10 w-full overflow-hidden">
-                                    {vaultCodes.map((v, i) => (
-                                        <div key={i} className="flex flex-col gap-2 min-w-0">
-                                            <label className="text-[8px] text-cyber-blue font-black uppercase text-center font-mono tracking-widest">S{i+1}</label>
-                                            <input 
-                                                maxLength={2} 
-                                                value={v} 
-                                                onChange={e => { const n = [...vaultCodes]; n[i] = e.target.value; setVaultCodes(n); }} 
-                                                className="vault-input py-4 text-xl font-black font-mono" 
-                                                placeholder="--" 
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                                <button onClick={() => {
-                                    if(gameState.sectors.every((s, i) => vaultCodes[i] === s.accessCode)) {
-                                        if (connRef.current) connRef.current.send({type:'FIN', name:gameState.squadAnimal});
-                                        setGameState(s => ({...s, stage:'squad-win'}));
-                                    } else setLockout(10);
-                                }} className="w-full bg-cyber-blue text-black font-black py-6 uppercase text-xl shadow-[0_0_20px_#00f3ff] font-mono mb-4 hover:bg-white transition-all active:scale-95">Confirmar Acceso</button>
-                                <button onClick={() => setVaultCodes(['','','','',''])} className="w-full border border-cyber-blue/20 text-cyber-blue/50 font-black py-2 uppercase text-[10px] font-mono hover:text-cyber-blue transition-colors">Resetear Secuencia</button>
-                                <div className="mt-auto pt-8 text-[9px] text-cyber-blue font-black uppercase font-mono opacity-50 leading-relaxed italic border-t border-cyber-blue/10">
-                                    <span className="text-cyber-gold">ADVERTENCIA:</span> Protocolo Hydra detectará cualquier intento fallido. Bloqueo de terminal en 1 error.
-                                </div>
-                            </div>
-                        </div>
-                        {active && <SectorModal sector={active} onSolved={id => { setGameState(s => ({...s, sectors: s.sectors.map(sec => sec.id === id ? {...sec, isSolved:true} : sec)})); setActiveSectorId(null); }} onLocked={() => { setActiveSectorId(null); setLockout(10); }} />}
-                    </div>
-                );
-            }
-
-            if (gameState.stage === 'squad-win') return (
-                <div className="min-h-screen flex items-center justify-center p-10 bg-matrix bg-black text-center">
-                    <div className="cyber-border p-16 bg-cyber-dark max-w-4xl shadow-[0_0_100px_rgba(0,255,65,0.2)]">
-                        <div className="corner"></div>
-                        <h2 className="text-6xl md:text-7xl font-black text-cyber-green mb-10 uppercase italic animate-glitch font-mono tracking-tighter">Infiltración Exitosa</h2>
-                        <div className="text-[8rem] md:text-[12rem] bg-cyber-green text-black font-black py-10 px-16 mb-12 shadow-[0_0_80px_#fff] border-8 border-white leading-none tracking-widest font-mono animate-glitch">{gameState.adminKeyword}</div>
-                        <p className="text-white text-3xl font-black uppercase italic tracking-widest font-mono mb-12">¡Comunica la clave al Mando Superior!</p>
-                        <button onClick={resetGame} className="px-10 py-5 border-2 border-cyber-green text-cyber-green font-black uppercase hover:bg-cyber-green hover:text-black transition-all font-mono shadow-[0_0_20px_rgba(0,255,65,0.3)]">Nueva Misión</button>
-                    </div>
-                </div>
-            );
-
-            if (gameState.stage === 'admin-monitor') return (
-                <div className="min-h-screen p-10 bg-cyber-dark relative flex flex-col">
-                    <div className="scan-animation absolute inset-0 opacity-5 pointer-events-none"></div>
-                    <header className="flex flex-col md:flex-row justify-between items-center border-b border-cyber-green/20 pb-8 mb-16 gap-4">
-                        <h1 className="text-4xl font-black text-cyber-green uppercase flex items-center gap-6 font-mono tracking-tighter">
-                            <span className="w-8 h-8 bg-cyber-red rounded-full animate-pulse shadow-[0_0_10px_#ff003c]"></span>
-                            Monitoreo Táctico Hydra
-                        </h1>
-                        <button onClick={resetGame} className="px-8 py-3 bg-cyber-red/10 border border-cyber-red text-cyber-red font-black uppercase hover:bg-cyber-red hover:text-white transition-all font-mono text-sm shadow-[0_0_20px_rgba(255,0,60,0.2)]">Nueva Misión</button>
-                    </header>
-                    <div className="grid md:grid-cols-2 gap-10 flex-1">
-                        <div className="cyber-border p-8 bg-black">
-                            <h2 className="text-cyber-gold mb-10 uppercase font-black text-2xl tracking-[0.2em] font-mono border-b border-cyber-gold/20 pb-4">Objetivos Cumplidos</h2>
-                            <div className="space-y-6">
-                                {gameState.finishedSquads.map((s, i) => (
-                                    <div key={i} className="flex justify-between items-center p-6 border border-cyber-green/30 text-4xl font-black uppercase bg-cyber-green/5 shadow-[0_0_15px_rgba(0,255,65,0.1)]">
-                                        <span className="text-cyber-green font-mono">{s.name}</span>
-                                        <span className="text-white font-mono tracking-tighter">{formatTime(s.time)}</span>
-                                    </div>
-                                ))}
-                                {gameState.finishedSquads.length === 0 && <p className="text-gray-800 text-sm font-mono uppercase tracking-widest italic text-center py-10 border border-dashed border-gray-900">Esperando finalización de unidades...</p>}
-                            </div>
-                        </div>
-                        <div className="cyber-border p-8 bg-black">
-                            <h2 className="text-cyber-blue mb-10 uppercase font-black text-2xl tracking-[0.2em] font-mono border-b border-cyber-blue/20 pb-4">Unidades en Campo</h2>
-                            <div className="grid gap-4">
-                                {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f => f.name === s)).map(s => (
-                                    <div key={s} className="p-6 text-2xl font-black flex items-center gap-5 bg-cyber-blue/5 border-l-8 border-cyber-blue uppercase font-mono shadow-[0_0_10px_rgba(0,243,255,0.05)]">
-                                        <div className="w-3 h-3 bg-cyber-blue rounded-full animate-pulse"></div> {s}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-            return null;
-        }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
