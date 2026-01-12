@@ -102,29 +102,107 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // Música de fondo (Royalty Free / Free Music Archive)
-        const AUDIO_PLAYLIST = [
-            "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/BoxCat_Games/Nameless_the_Hackers_RPG_Soundtrack/BoxCat_Games_-_10_-_Epic_Song.mp3",
-            "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3",
-            "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Kai_Engel/Satin/Kai_Engel_-_04_-_Sentinel.mp3"
+        // SISTEMA DE AUDIO "CAJA NEGRA"
+        // El navegador no puede "ver" los archivos, así que definimos una lista de POSIBLES nombres.
+        // El juego probará estos nombres aleatoriamente. Si el archivo existe, suena. Si no, salta al siguiente.
+        const POTENTIAL_TRACKS = [
+            "./audio/background.mp3",
+            "./audio/music.mp3",
+            "./audio/cyber.mp3",
+            "./audio/track1.mp3",
+            "./audio/track2.mp3",
+            "./audio/track3.mp3",
+            "./audio/track4.mp3",
+            "./audio/track5.mp3"
         ];
 
         // Variable global para el contexto de audio
         let globalAudioCtx = null;
+        // Referencia global para los nodos del oscilador (para poder detenerlos/ajustar volumen)
+        let droneNodes = null;
 
         const getAudioContext = () => {
             if (!globalAudioCtx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (AudioContext) globalAudioCtx = new AudioContext();
             }
-            // Importante: intentar reanudar siempre que sea posible
             if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
                 globalAudioCtx.resume();
             }
             return globalAudioCtx;
         };
 
-        // Generador de Sonidos Web Audio API
+        // Generador de Ambiente Cyberpunk (Fallback si no hay mp3)
+        const startCyberpunkDrone = (vol = 0.3) => {
+            const ctx = getAudioContext();
+            if (!ctx || droneNodes) return; // Ya está sonando o no hay contexto
+
+            // Creamos 2 osciladores para un sonido "Deep Drone"
+            const osc1 = ctx.createOscillator();
+            const osc2 = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            const filter = ctx.createBiquadFilter();
+
+            // Configuración Oscuro/Cyberpunk
+            osc1.type = 'sawtooth';
+            osc1.frequency.value = 50; // Bajos profundos
+            
+            osc2.type = 'sawtooth';
+            osc2.frequency.value = 51; // Ligero detune para efecto chorus natural
+
+            filter.type = 'lowpass';
+            filter.frequency.value = 250; // Filtramos los agudos molestos
+            filter.Q.value = 1;
+
+            // Cadena de conexión
+            osc1.connect(filter);
+            osc2.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            // LFO para mover el filtro suavemente (darle vida)
+            const lfo = ctx.createOscillator();
+            lfo.type = 'sine';
+            lfo.frequency.value = 0.1; // Muy lento
+            const lfoGain = ctx.createGain();
+            lfoGain.gain.value = 100;
+            lfo.connect(lfoGain);
+            lfoGain.connect(filter.frequency);
+
+            gainNode.gain.setValueAtTime(0, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(vol * 0.3, ctx.currentTime + 2); // Fade in suave
+
+            osc1.start();
+            osc2.start();
+            lfo.start();
+
+            droneNodes = { osc1, osc2, lfo, gainNode };
+            console.log(">> AUDIO SYSTEM: Fallback Drone Activated");
+        };
+
+        const stopCyberpunkDrone = () => {
+            if (droneNodes) {
+                const { osc1, osc2, lfo, gainNode } = droneNodes;
+                const ctx = getAudioContext();
+                // Fade out
+                try {
+                    gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
+                    setTimeout(() => {
+                        osc1.stop(); osc2.stop(); lfo.stop();
+                    }, 1000);
+                } catch(e) {}
+                droneNodes = null;
+            }
+        };
+
+        const updateDroneVolume = (vol) => {
+            if (droneNodes && droneNodes.gainNode) {
+                const ctx = getAudioContext();
+                droneNodes.gainNode.gain.setTargetAtTime(vol * 0.3, ctx.currentTime, 0.1);
+            }
+        };
+
+        // Generador de Sonidos SFX (Click, Success, Error)
         const synthSFX = (type, vol = 0.5) => {
             try {
                 const ctx = getAudioContext();
@@ -255,6 +333,7 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
             const [lockout, setLockout] = useState(0);
             const [activeSectorId, setActiveSectorId] = useState(null);
             const [vaultCodes, setVaultCodes] = useState(['','','','','']);
+            const [audioSource, setAudioSource] = useState('ESPERANDO...'); 
             
             const audioRef = useRef(null);
             const peerRef = useRef(null);
@@ -263,8 +342,9 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
             const connectedSquadsRef = useRef([]); 
             const finishedSquadsRef = useRef([]);
             const startTimeRef = useRef(null);
-            const playlistRef = useRef([...AUDIO_PLAYLIST].sort(() => Math.random() - 0.5));
             const currentTrackIdx = useRef(0);
+            const usingDroneRef = useRef(false);
+            const retryCountRef = useRef(0); // Para evitar bucles infinitos si no hay archivos
 
             // Función centralizada de SFX con validación de contexto
             const playSFX = (type) => {
@@ -275,36 +355,71 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
 
             // Inicialización de música de fondo (SOLO ADMIN)
             const initMusic = () => {
-                getAudioContext(); // Crítico: Despertar AudioContext en interacción de usuario
-                if (audioRef.current) return;
+                const ctx = getAudioContext(); 
+                if (!ctx) return;
+
+                if (audioRef.current || droneNodes) return;
                 
-                const playTrack = () => {
-                    const track = playlistRef.current[currentTrackIdx.current];
-                    const audio = new Audio(track);
-                    audio.volume = volume; // Asegurar que el volumen inicial se aplica
+                // Algoritmo de Reproducción Aleatoria Resistente a Fallos
+                const playRandomTrack = () => {
+                    // Si ya fallamos demasiadas veces seguidas (más que el total de pistas), asumimos que no hay archivos
+                    if (retryCountRef.current > POTENTIAL_TRACKS.length * 2) {
+                         console.warn(">> Ningún archivo MP3 válido encontrado. Activando Drone Cyberpunk.");
+                         usingDroneRef.current = true;
+                         setAudioSource('SINTETIZADOR DE RESPALDO (NO MP3)');
+                         startCyberpunkDrone(volume);
+                         return;
+                    }
+
+                    // Elegir pista aleatoria
+                    let nextIdx;
+                    do {
+                        nextIdx = Math.floor(Math.random() * POTENTIAL_TRACKS.length);
+                    } while (POTENTIAL_TRACKS.length > 1 && nextIdx === currentTrackIdx.current && retryCountRef.current < 5);
                     
+                    currentTrackIdx.current = nextIdx;
+                    const trackPath = POTENTIAL_TRACKS[nextIdx];
+                    const trackName = trackPath.split('/').pop();
+                    
+                    const audio = new Audio(trackPath);
+                    audio.volume = volume;
+                    
+                    // Si termina, tocar otra
                     audio.onended = () => {
-                        currentTrackIdx.current = (currentTrackIdx.current + 1) % playlistRef.current.length;
-                        playTrack();
+                        retryCountRef.current = 0; // Resetear contador al tener éxito
+                        playRandomTrack();
                     };
                     
+                    // Si falla (no existe el archivo), probar otro INMEDIATAMENTE
                     audio.onerror = (e) => {
-                        console.warn("Error reproduciendo pista, saltando...", e);
-                        currentTrackIdx.current = (currentTrackIdx.current + 1) % playlistRef.current.length;
-                        setTimeout(playTrack, 1000);
+                        console.log(`Pista no encontrada: ${trackPath}. Probando siguiente...`);
+                        retryCountRef.current += 1;
+                        playRandomTrack(); // Recursión para probar el siguiente
+                    };
+
+                    // Si carga, éxito
+                    audio.oncanplaythrough = () => {
+                        retryCountRef.current = 0; // Resetear contador
+                        usingDroneRef.current = false;
+                        setAudioSource(`REPRODUCIENDO: ${trackName}`);
+                        stopCyberpunkDrone(); // Apagar drone
                     };
 
                     audioRef.current = audio;
-                    // Play immediately to establish the stream
-                    audio.play().catch(e => console.log("Autoplay prevenido por navegador, esperando clic:", e));
+                    audio.play().catch(e => console.log("Esperando interacción user...", e));
                 };
                 
-                playTrack();
-                setIsMuted(false); // Forzar unmute para que el admin escuche sin tocar controles
+                playRandomTrack();
+                setIsMuted(false); 
             };
 
             useEffect(() => {
-                if (audioRef.current) {
+                // Control de volumen / Mute dinámico
+                if (usingDroneRef.current) {
+                    if (isMuted) stopCyberpunkDrone();
+                    else startCyberpunkDrone(volume);
+                    updateDroneVolume(volume);
+                } else if (audioRef.current) {
                     audioRef.current.volume = volume;
                     if (isMuted) audioRef.current.pause();
                     else audioRef.current.play().catch(() => {});
@@ -433,9 +548,12 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
 
             const resetGame = () => {
                 if(peerRef.current) peerRef.current.destroy();
+                stopCyberpunkDrone(); // Parar drone al resetear
+                if(audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
                 adminConns.current = [];
                 connectedSquadsRef.current = [];
                 finishedSquadsRef.current = [];
+                setAudioSource('ESPERANDO...');
                 setGameState(INITIAL_STATE);
             };
 
@@ -472,17 +590,32 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                                         // CREAR NUEVA MISIÓN (ADMIN)
                                     </button>
                                 </div>
-                                <p className="mt-8 text-[10px] text-gray-600 uppercase italic font-mono opacity-50">v1.2.4 // AUDIO SYSTEMS ONLINE</p>
+                                <p className="mt-8 text-[10px] text-gray-600 uppercase italic font-mono opacity-50">v1.2.8 // AUTO-DJ ONLINE</p>
                             </div>
                         );
                     case 'admin-setup':
                         return (
                             <div className="cyber-border p-10 bg-black max-w-lg w-full z-10 relative">
                                 <h2 className="text-3xl text-cyber-green mb-10 font-black uppercase border-b border-cyber-green/30 pb-4">Configurar Misión</h2>
+                                
+                                {/* Info de Audio Automático */}
+                                <div className="mb-6 cyber-border p-4 bg-cyber-green/5">
+                                    <label className="block text-cyber-blue text-sm mb-2 font-bold uppercase">♪ SISTEMA DE AUDIO AUTOMÁTICO</label>
+                                    <p className="text-[10px] text-gray-400 font-mono mb-2">
+                                        Coloca tus archivos .mp3 en la carpeta <b>/audio</b> y asegúrate de que tengan alguno de estos nombres:
+                                    </p>
+                                    <ul className="text-[10px] text-cyber-green font-mono list-disc pl-4 mb-2">
+                                        <li>background.mp3, music.mp3, cyber.mp3</li>
+                                        <li>track1.mp3 ... track5.mp3</li>
+                                    </ul>
+                                    <div className="mt-2 text-[10px] text-cyber-gold font-mono">{audioSource}</div>
+                                </div>
+
                                 <div className="mb-8">
                                     <label className="block text-cyber-blue text-sm mb-2 font-bold uppercase">Archivo de Preguntas (.CSV)</label>
                                     <input id="admin-file" type="file" accept=".csv" className="text-xs block w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-cyber-green/20 file:text-cyber-green hover:file:bg-cyber-green/30" />
                                 </div>
+                                
                                 <button onClick={() => {
                                     const file = document.getElementById('admin-file').files[0];
                                     handleStartAdmin(file);
@@ -517,6 +650,7 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                                         setGameState(s => ({...s, stage: 'admin-monitor', sectors: []}));
                                     }} disabled={gameState.connectedSquads.length === 0} className={`w-full h-full text-5xl font-black uppercase transition-all ${gameState.connectedSquads.length > 0 ? 'bg-cyber-green text-black shadow-[0_0_40px_#00ff41] hover:bg-white' : 'bg-gray-900 text-gray-700 cursor-not-allowed border border-gray-800'}`}>INICIAR MISIÓN</button>
                                 </div>
+                                <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-600">AUDIO SOURCE: {audioSource}</div>
                             </div>
                         );
                     case 'squad-selection':
@@ -700,6 +834,7 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                                         </div>
                                     </div>
                                 </div>
+                                <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-600">AUDIO SOURCE: {audioSource}</div>
                             </div>
                         );
                     default: return <div className="text-4xl text-cyber-green">RELOADING...</div>;
@@ -715,7 +850,7 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                             </div>
                             <button onClick={() => {
                                 getAudioContext(); // Ensure context is live
-                                if (!audioRef.current) initMusic();
+                                if (!audioRef.current && !usingDroneRef.current) initMusic();
                                 setIsMuted(!isMuted);
                             }} className={`w-14 h-14 border-2 flex items-center justify-center text-2xl transition-all ${isMuted ? 'border-cyber-red text-cyber-red' : 'border-cyber-green text-cyber-green shadow-[0_0_15px_#00ff41]'}`}>
                                 {isMuted ? '🔇' : '🔊'}
