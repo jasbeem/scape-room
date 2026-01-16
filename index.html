@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scape Room - Protocolo Cyberpunk</title>
+    <title>Scape Room</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐺</text></svg>">
     
     <!-- Librerías desde CDN (No requiere build) -->
@@ -82,6 +82,12 @@
             height: 3.5rem; /* Altura fija para consistencia */
         }
         
+        /* Scrollbar Personalizado */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; border-left: 1px solid #003300; }
+        ::-webkit-scrollbar-thumb { background: #00ff41; border-radius: 0; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f3ff; }
+
         .scan-animation { background: linear-gradient(0deg, transparent 0%, rgba(0, 243, 255, 0.1) 50%, transparent 100%); background-size: 100% 200%; animation: scan 3s linear infinite; position: absolute; inset: 0; pointer-events: none; }
         @keyframes scan { 0% { background-position: 0 -100%; } 100% { background-position: 0 100%; } }
     </style>
@@ -271,6 +277,7 @@
             }
         };
 
+        // EXPANDED SQUADS TO 30
         const SQUADS = [
             { name: 'Cobra', icon: '🐍' }, { name: 'Tigre', icon: '🐅' },
             { name: 'Halcón', icon: '🦅' }, { name: 'Lobo', icon: '🐺' },
@@ -280,6 +287,13 @@
             { name: 'Fénix', icon: '🐦‍🔥' }, { name: 'Toro', icon: '🐂' },
             { name: 'Rino', icon: '🦏' }, { name: 'Zorro', icon: '🦊' },
             { name: 'Búho', icon: '🦉' }, { name: 'Gorila', icon: '🦍' },
+            { name: 'Araña', icon: '🕷️' }, { name: 'Escorpión', icon: '🦂' },
+            { name: 'Cuervo', icon: '🐦‍⬛' }, { name: 'Pulpo', icon: '🐙' },
+            { name: 'Elefante', icon: '🐘' }, { name: 'Caballo', icon: '🐎' },
+            { name: 'Ciervo', icon: '🦌' }, { name: 'Cisne', icon: '🦢' },
+            { name: 'Camaleón', icon: '🦎' }, { name: 'Tortuga', icon: '🐢' },
+            { name: 'Pingüino', icon: '🐧' }, { name: 'Murciélago', icon: '🦇' },
+            { name: 'Cangrejo', icon: '🦀' }, { name: 'Medusa', icon: '🪼' }
         ];
 
         const EXAMPLE_CSV = `Tipo;Pregunta;R1;R2;R3;R4;Tiempo;Correcta;URL Imagen
@@ -333,7 +347,8 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
             const [lockout, setLockout] = useState(0);
             const [activeSectorId, setActiveSectorId] = useState(null);
             const [vaultCodes, setVaultCodes] = useState(['','','','','']);
-            const [audioSource, setAudioSource] = useState('ESPERANDO...'); 
+            const [audioSource, setAudioSource] = useState('ESPERANDO...');
+            const [showHelp, setShowHelp] = useState(false);
             
             const audioRef = useRef(null);
             const peerRef = useRef(null);
@@ -344,25 +359,21 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
             const startTimeRef = useRef(null);
             const currentTrackIdx = useRef(0);
             const usingDroneRef = useRef(false);
-            const retryCountRef = useRef(0); // Para evitar bucles infinitos si no hay archivos
+            const retryCountRef = useRef(0); 
 
             // Función centralizada de SFX con validación de contexto
             const playSFX = (type) => {
-                getAudioContext(); // Intentar despertar el contexto
+                getAudioContext(); 
                 if (isMuted) return;
                 synthSFX(type, volume);
             };
 
-            // Inicialización de música de fondo (SOLO ADMIN)
             const initMusic = () => {
                 const ctx = getAudioContext(); 
                 if (!ctx) return;
-
                 if (audioRef.current || droneNodes) return;
                 
-                // Algoritmo de Reproducción Aleatoria Resistente a Fallos
                 const playRandomTrack = () => {
-                    // Si ya fallamos demasiadas veces seguidas (más que el total de pistas), asumimos que no hay archivos
                     if (retryCountRef.current > POTENTIAL_TRACKS.length * 2) {
                          console.warn(">> Ningún archivo MP3 válido encontrado. Activando Drone Cyberpunk.");
                          usingDroneRef.current = true;
@@ -371,7 +382,6 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                          return;
                     }
 
-                    // Elegir pista aleatoria
                     let nextIdx;
                     do {
                         nextIdx = Math.floor(Math.random() * POTENTIAL_TRACKS.length);
@@ -384,25 +394,22 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                     const audio = new Audio(trackPath);
                     audio.volume = volume;
                     
-                    // Si termina, tocar otra
                     audio.onended = () => {
-                        retryCountRef.current = 0; // Resetear contador al tener éxito
+                        retryCountRef.current = 0; 
                         playRandomTrack();
                     };
                     
-                    // Si falla (no existe el archivo), probar otro INMEDIATAMENTE
                     audio.onerror = (e) => {
                         console.log(`Pista no encontrada: ${trackPath}. Probando siguiente...`);
                         retryCountRef.current += 1;
-                        playRandomTrack(); // Recursión para probar el siguiente
+                        playRandomTrack(); 
                     };
 
-                    // Si carga, éxito
                     audio.oncanplaythrough = () => {
-                        retryCountRef.current = 0; // Resetear contador
+                        retryCountRef.current = 0; 
                         usingDroneRef.current = false;
                         setAudioSource(`REPRODUCIENDO: ${trackName}`);
-                        stopCyberpunkDrone(); // Apagar drone
+                        stopCyberpunkDrone(); 
                     };
 
                     audioRef.current = audio;
@@ -414,7 +421,6 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
             };
 
             useEffect(() => {
-                // Control de volumen / Mute dinámico
                 if (usingDroneRef.current) {
                     if (isMuted) stopCyberpunkDrone();
                     else startCyberpunkDrone(volume);
@@ -440,7 +446,7 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
             };
 
             const handleStartAdmin = (file) => {
-                initMusic(); // Iniciar música para Admin
+                initMusic(); 
                 if (!file) return alert("Archivo de misión requerido");
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -450,7 +456,6 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                         return { id: `q-${i}`, question: p[1], options: [p[2], p[3], p[4], p[5]], correctIndex: (parseInt(p[7]) || 1) - 1, imageUrl: p[8] || null };
                     }).filter(q => q.question);
 
-                    // ID Numérico de 5 dígitos
                     const id = Math.floor(10000 + Math.random() * 90000).toString();
                     
                     const peer = new Peer(`sr-host-${id}`);
@@ -502,9 +507,7 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
             };
 
             const handleConnectSquad = (rid) => {
-                // initMusic() REMOVIDO: Los escuadrones no tienen música de fondo.
-                getAudioContext(); // Solo inicializamos el contexto para SFX.
-                
+                getAudioContext(); 
                 if (!rid) return;
                 const peer = new Peer();
                 peer.on('open', () => {
@@ -548,7 +551,7 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
 
             const resetGame = () => {
                 if(peerRef.current) peerRef.current.destroy();
-                stopCyberpunkDrone(); // Parar drone al resetear
+                stopCyberpunkDrone(); 
                 if(audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
                 adminConns.current = [];
                 connectedSquadsRef.current = [];
@@ -564,7 +567,6 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                 </div>
             );
 
-            // Determinar si mostrar controles de audio (Solo ADMIN)
             const showAudioControls = gameState.stage.startsWith('admin');
 
             const renderContent = () => {
@@ -590,7 +592,7 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                                         // CREAR NUEVA MISIÓN (ADMIN)
                                     </button>
                                 </div>
-                                <p className="mt-8 text-[10px] text-gray-600 uppercase italic font-mono opacity-50">v1.2.8 // AUTO-DJ ONLINE</p>
+                                <p className="mt-8 text-[10px] text-gray-600 uppercase italic font-mono opacity-50">v1.2.9 // MASSIVE MULTIPLAYER READY</p>
                             </div>
                         );
                     case 'admin-setup':
@@ -598,7 +600,6 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                             <div className="cyber-border p-10 bg-black max-w-lg w-full z-10 relative">
                                 <h2 className="text-3xl text-cyber-green mb-10 font-black uppercase border-b border-cyber-green/30 pb-4">Configurar Misión</h2>
                                 
-                                {/* Info de Audio Automático */}
                                 <div className="mb-6 cyber-border p-4 bg-cyber-green/5">
                                     <label className="block text-cyber-blue text-sm mb-2 font-bold uppercase">♪ SISTEMA DE AUDIO AUTOMÁTICO</label>
                                     <p className="text-[10px] text-gray-400 font-mono mb-2">
@@ -629,15 +630,14 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                                 <p className="text-cyber-blue text-sm uppercase tracking-widest mb-4 font-mono">COMPARTIR ID CON ESCUADRONES</p>
                                 <div className="huge-text font-black text-cyber-green border-4 border-cyber-green px-12 py-10 bg-cyber-green/5 mb-16 shadow-[0_0_50px_rgba(0,255,65,0.2)] tracking-wider">{gameState.roomId}</div>
                                 <div className="grid md:grid-cols-2 gap-8 w-full">
-                                    <div className="cyber-border p-8 bg-black/80 font-mono h-64 overflow-y-auto">
+                                    <div className="cyber-border p-8 bg-black/80 font-mono h-64 overflow-y-auto custom-scrollbar">
                                         <h3 className="text-cyber-blue uppercase mb-6 font-bold text-sm sticky top-0 bg-black pb-2 border-b border-cyber-blue/20">Unidades Conectadas: {gameState.connectedSquads.length}</h3>
-                                        <div className="flex flex-wrap gap-3">{gameState.connectedSquads.map(s => <div key={s} className="px-4 py-2 border border-cyber-green bg-cyber-green/10 text-xl font-bold animate-pulse">{s}</div>)}</div>
+                                        <div className="flex flex-wrap gap-2">{gameState.connectedSquads.map(s => <div key={s} className="px-3 py-1 text-sm border border-cyber-green bg-cyber-green/10 font-bold animate-pulse">{s}</div>)}</div>
                                     </div>
                                     <button onClick={() => {
                                         playSFX('access');
                                         startTimeRef.current = Date.now();
                                         
-                                        // Generar sectores únicos y mezclados para cada escuadrón conectado
                                         adminConns.current.forEach(c => {
                                             const shuffled = [...gameState.rawQuestions].sort(() => Math.random() - 0.5);
                                             const sectors = [1,2,3,4,5].map(i => ({
@@ -646,7 +646,6 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                                             c.send({type:'GO', sectors});
                                         });
 
-                                        // Para el monitor del admin, usamos un set genérico (aunque no se use en detalle)
                                         setGameState(s => ({...s, stage: 'admin-monitor', sectors: []}));
                                     }} disabled={gameState.connectedSquads.length === 0} className={`w-full h-full text-5xl font-black uppercase transition-all ${gameState.connectedSquads.length > 0 ? 'bg-cyber-green text-black shadow-[0_0_40px_#00ff41] hover:bg-white' : 'bg-gray-900 text-gray-700 cursor-not-allowed border border-gray-800'}`}>INICIAR MISIÓN</button>
                                 </div>
@@ -655,48 +654,50 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                         );
                     case 'squad-selection':
                         return (
-                            <div className="z-10 w-full max-w-6xl px-4 text-center">
-                                <h2 className="text-4xl text-cyber-blue mb-16 font-black uppercase tracking-widest font-mono">Selección de Unidad Operativa</h2>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                    {SQUADS.map(s => {
-                                        const isTaken = gameState.takenSquads.includes(s.name);
-                                        const isSelected = gameState.squadAnimal === s.name;
-                                        
-                                        let btnClass = "cyber-border p-8 flex flex-col items-center gap-4 transition-all duration-500 ";
-                                        if (gameState.isSquadSelecting) {
-                                            if (isSelected) btnClass += "opacity-100 scale-110 border-cyber-blue bg-cyber-blue/10 shadow-[0_0_30px_#00f3ff] z-20";
-                                            else btnClass += "opacity-10 grayscale scale-90 blur-sm";
-                                        } else {
-                                            if (isTaken) btnClass += "opacity-20 grayscale cursor-not-allowed border-gray-800";
-                                            else btnClass += "hover:border-cyber-blue hover:scale-105 hover:bg-cyber-blue/5 cursor-pointer";
-                                        }
+                            <div className="z-10 w-full max-w-7xl px-4 text-center">
+                                <h2 className="text-4xl text-cyber-blue mb-8 font-black uppercase tracking-widest font-mono">Selección de Unidad ({gameState.takenSquads.length}/30)</h2>
+                                
+                                <div className="overflow-y-auto max-h-[60vh] cyber-border p-6 bg-black/50 custom-scrollbar mb-8">
+                                    <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
+                                        {SQUADS.map(s => {
+                                            const isTaken = gameState.takenSquads.includes(s.name);
+                                            const isSelected = gameState.squadAnimal === s.name;
+                                            
+                                            let btnClass = "border border-cyber-green/30 p-4 flex flex-col items-center gap-2 transition-all duration-300 relative group ";
+                                            if (gameState.isSquadSelecting) {
+                                                if (isSelected) btnClass += "opacity-100 scale-105 border-cyber-blue bg-cyber-blue/20 shadow-[0_0_20px_#00f3ff] z-20";
+                                                else btnClass += "opacity-20 grayscale scale-95";
+                                            } else {
+                                                if (isTaken) btnClass += "opacity-20 grayscale cursor-not-allowed bg-gray-900";
+                                                else btnClass += "hover:border-cyber-blue hover:bg-cyber-blue/10 cursor-pointer bg-black/80";
+                                            }
 
-                                        return (
-                                            <button key={s.name} 
-                                                disabled={gameState.isSquadSelecting || isTaken} 
-                                                onClick={() => {
-                                                    playSFX('click');
-                                                    setGameState(prev => ({...prev, isSquadSelecting: true, squadAnimal: s.name}));
-                                                    if(connRef.current) connRef.current.send({type:'REQ', name:s.name});
-                                                }}
-                                                className={btnClass}>
-                                                <span className="text-7xl mb-2 filter drop-shadow-[0_0_10px_rgba(0,255,65,0.5)]">{s.icon}</span>
-                                                <span className={`font-bold uppercase tracking-widest ${isTaken && !isSelected ? 'line-through' : ''}`}>
-                                                    {isTaken && !isSelected ? 'BLOQUEADO' : s.name}
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
+                                            return (
+                                                <button key={s.name} 
+                                                    disabled={gameState.isSquadSelecting || isTaken} 
+                                                    onClick={() => {
+                                                        playSFX('click');
+                                                        setGameState(prev => ({...prev, isSquadSelecting: true, squadAnimal: s.name}));
+                                                        if(connRef.current) connRef.current.send({type:'REQ', name:s.name});
+                                                    }}
+                                                    className={btnClass}>
+                                                    <span className="text-4xl filter drop-shadow-[0_0_5px_rgba(0,255,65,0.5)]">{s.icon}</span>
+                                                    <span className={`font-bold uppercase text-xs md:text-sm tracking-wider ${isTaken && !isSelected ? 'line-through text-red-500' : 'text-cyber-green group-hover:text-cyber-blue'}`}>
+                                                        {s.name}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                                 
                                 {gameState.isSquadSelecting && (
                                     <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-2xl px-6">
                                         <div className="bg-black/90 border-2 border-cyber-blue p-6 text-center shadow-[0_0_50px_rgba(0,243,255,0.3)] backdrop-blur-md animate-pulse">
-                                            <div className="text-cyber-blue text-2xl font-black uppercase font-mono tracking-widest mb-2">VERIFICANDO ENLACE: {gameState.squadAnimal}</div>
+                                            <div className="text-cyber-blue text-2xl font-black uppercase font-mono tracking-widest mb-2">VERIFICANDO: {gameState.squadAnimal}</div>
                                             <div className="w-full bg-gray-900 h-1 mt-2 overflow-hidden">
                                                 <div className="h-full bg-cyber-blue w-1/3 animate-[shimmer_1s_infinite_linear]"></div>
                                             </div>
-                                            <p className="text-white text-[10px] mt-2 opacity-70 uppercase tracking-[0.5em] font-mono">Esperando confirmación del servidor central...</p>
                                         </div>
                                     </div>
                                 )}
@@ -806,7 +807,7 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                                     <button onClick={resetGame} className="px-10 py-4 border border-cyber-red text-cyber-red font-black uppercase hover:bg-cyber-red hover:text-white transition-all">TERMINAR SESIÓN</button>
                                 </header>
                                 <div className="grid md:grid-cols-2 gap-12 flex-1 overflow-hidden">
-                                    <div className="cyber-border p-8 bg-black/50 overflow-y-auto relative">
+                                    <div className="cyber-border p-8 bg-black/50 overflow-y-auto relative custom-scrollbar">
                                         <div className="absolute top-0 right-0 p-2 text-[10px] text-cyber-gold font-mono">LIVE FEED</div>
                                         <h2 className="text-cyber-gold text-2xl mb-10 font-black uppercase border-b border-cyber-gold/20 pb-4 tracking-widest">RANKING EN TIEMPO REAL</h2>
                                         <div className="space-y-4">
@@ -822,13 +823,13 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                                             {gameState.finishedSquads.length === 0 && <p className="text-gray-700 text-center py-20 animate-pulse uppercase tracking-[0.3em] font-mono">Esperando confirmaciones de extracción...</p>}
                                         </div>
                                     </div>
-                                    <div className="cyber-border p-8 bg-black/50">
+                                    <div className="cyber-border p-8 bg-black/50 custom-scrollbar overflow-y-auto">
                                         <h2 className="text-cyber-blue text-2xl mb-10 font-black uppercase border-b border-cyber-blue/20 pb-4 tracking-widest">ESTADO DE UNIDADES</h2>
-                                        <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
                                             {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f => f.name === s)).map(s => (
-                                                <div key={s} className="p-6 text-3xl font-black bg-cyber-blue/10 border-l-[12px] border-cyber-blue uppercase font-mono flex justify-between items-center">
+                                                <div key={s} className="p-4 text-xl font-black bg-cyber-blue/10 border-l-[6px] border-cyber-blue uppercase font-mono flex justify-between items-center">
                                                     <span>{s}</span>
-                                                    <span className="text-xs text-cyber-blue animate-pulse">HACKEANDO...</span>
+                                                    <span className="text-[10px] text-cyber-blue animate-pulse">RUNNING</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -843,6 +844,33 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
 
             return (
                 <div className="min-h-screen flex items-center justify-center relative bg-matrix overflow-hidden">
+                    {/* Botón de Ayuda */}
+                    <button 
+                        onClick={() => setShowHelp(true)} 
+                        className="fixed top-8 left-8 z-[3000] w-12 h-12 border-2 border-cyber-blue text-cyber-blue flex items-center justify-center rounded-full font-bold text-xl hover:bg-cyber-blue hover:text-black transition-all shadow-[0_0_15px_#00f3ff]"
+                        aria-label="Ayuda"
+                    >
+                        ?
+                    </button>
+
+                    {/* Modal de Ayuda */}
+                    {showHelp && (
+                        <div className="fixed inset-0 z-[4000] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm">
+                            <div className="cyber-border w-full max-w-2xl p-8 bg-black relative shadow-[0_0_50px_rgba(0,243,255,0.2)]">
+                                <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 text-cyber-red hover:text-white font-black text-xl">X</button>
+                                <h2 className="text-3xl text-cyber-blue mb-6 font-black uppercase font-mono border-b border-cyber-blue/30 pb-2">Protocolo de Misión</h2>
+                                <div className="space-y-4 text-white font-mono leading-relaxed opacity-90">
+                                    <p><strong className="text-cyber-green">1. INICIAR:</strong> Ingresa el ID proporcionado por el Admin.</p>
+                                    <p><strong className="text-cyber-green">2. IDENTIDAD:</strong> Selecciona un avatar disponible. ¡Sé rápido, son únicos!</p>
+                                    <p><strong className="text-cyber-green">3. HACKEO:</strong> Responde preguntas para desbloquear los 5 SECTORES.</p>
+                                    <p><strong className="text-cyber-green">4. CÓDIGOS:</strong> Cada sector te dará un número de 2 dígitos.</p>
+                                    <p><strong className="text-cyber-green">5. EXTRACCIÓN:</strong> Introduce los códigos en la Bóveda Hydra para escapar.</p>
+                                    <p className="text-xs text-cyber-gold mt-6 border-t border-gray-800 pt-4">ADVERTENCIA: Si cierras el navegador, perderás la conexión neuronal.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {showAudioControls && (
                         <div className="fixed top-8 right-8 z-[3000] flex flex-col items-end gap-3 group">
                             <div className="bg-black/90 border border-cyber-green p-5 rounded opacity-0 group-hover:opacity-100 transition-all shadow-xl">
