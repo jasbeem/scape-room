@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scape Room</title>
+    <title>Scape Room - Protocolo Cyberpunk</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐺</text></svg>">
     
     <!-- Librerías desde CDN (No requiere build) -->
@@ -844,14 +844,16 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
 
             return (
                 <div className="min-h-screen flex items-center justify-center relative bg-matrix overflow-hidden">
-                    {/* Botón de Ayuda */}
-                    <button 
-                        onClick={() => setShowHelp(true)} 
-                        className="fixed top-8 left-8 z-[3000] w-12 h-12 border-2 border-cyber-blue text-cyber-blue flex items-center justify-center rounded-full font-bold text-xl hover:bg-cyber-blue hover:text-black transition-all shadow-[0_0_15px_#00f3ff]"
-                        aria-label="Ayuda"
-                    >
-                        ?
-                    </button>
+                    {/* Botón de Ayuda (Solo en pantalla principal) */}
+                    {gameState.stage === 'selection' && (
+                        <button 
+                            onClick={() => setShowHelp(true)} 
+                            className="fixed top-8 left-8 z-[3000] w-12 h-12 border-2 border-cyber-blue text-cyber-blue flex items-center justify-center rounded-full font-bold text-xl hover:bg-cyber-blue hover:text-black transition-all shadow-[0_0_15px_#00f3ff]"
+                            aria-label="Ayuda"
+                        >
+                            ?
+                        </button>
+                    )}
 
                     {/* Modal de Ayuda */}
                     {showHelp && (
