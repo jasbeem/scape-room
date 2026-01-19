@@ -3,502 +3,437 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scape Room - Protocolo Cyberpunk</title>
+    <title>Scape Room - Protocolo Cyberpunk (OFFLINE)</title>
+    <!-- Icono en Base64 para que cargue siempre -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐺</text></svg>">
     
-    <!-- Librerías desde CDN (No requiere build) -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <!-- 
+        === IMPORTANTE: CARPETA JS ===
+        Asegúrate de tener la carpeta "js" al lado de este archivo con:
+        - react.js
+        - react-dom.js
+        - babel.js
+        - peerjs.js
+    -->
+    <script src="./js/react.js"></script>
+    <script src="./js/react-dom.js"></script>
+    <script src="./js/babel.js"></script>
+    <script src="./js/peerjs.js"></script>
     
+    <!-- Intenta cargar la fuente online, pero tenemos un fallback robusto en CSS -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        cyber: {
-                            black: '#020202', green: '#00ff41', blue: '#00f3ff',
-                            red: '#ff003c', gold: '#ffd700', dark: '#0a0a0a'
-                        }
-                    },
-                    fontFamily: { mono: ['"Share Tech Mono"', 'monospace'] },
-                    animation: {
-                        'glitch': 'glitch 1s linear infinite',
-                        'pulse-soft': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'alarm': 'alarm 0.5s ease-in-out infinite alternate',
-                        'shake': 'shake 0.4s cubic-bezier(.36,.07,.19,.97) both',
-                        'shimmer': 'shimmer 1.5s infinite linear',
-                    },
-                    keyframes: {
-                        glitch: {
-                            '2%, 64%': { transform: 'translate(2px,0) skew(0deg)' },
-                            '4%, 60%': { transform: 'translate(-2px,0) skew(0deg)' },
-                            '62%': { transform: 'translate(0,0) skew(5deg)' },
-                        },
-                        alarm: { 'from': { backgroundColor: 'rgba(255, 0, 60, 0.1)' }, 'to': { backgroundColor: 'rgba(255, 0, 60, 0.5)' } },
-                        shake: { '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' }, '20%, 80%': { transform: 'translate3d(2px, 0, 0)' }, '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' }, '40%, 60%': { transform: 'translate3d(4px, 0, 0)' } },
-                        shimmer: { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(300%)' } }
-                    }
-                }
-            }
-        }
-    </script>
-
     <style>
-        body { background-color: #020202; color: #00ff41; overflow-x: hidden; font-family: 'Share Tech Mono', monospace; }
-        .bg-matrix {
-            background-image: linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
-            background-size: 40px 40px;
+        /* --- CORE VARIABLES --- */
+        :root {
+            --c-black: #050505;
+            --c-green: #00ff41;
+            --c-green-dim: rgba(0, 255, 65, 0.1);
+            --c-blue: #00f3ff;
+            --c-blue-dim: rgba(0, 243, 255, 0.1);
+            --c-red: #ff003c;
+            --c-gold: #ffd700;
+            
+            /* Fuente Híbrida: Intenta cargar la bonita, si no, usa las del sistema estilo consola */
+            --font-main: 'Share Tech Mono', 'Courier New', Courier, 'Lucida Console', Monaco, monospace;
         }
-        .crt-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-            background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 999;
-        }
-        .cyber-border { position: relative; border: 1px solid rgba(0, 255, 65, 0.3); }
-        .cyber-border::before, .cyber-border::after {
-            content: ''; position: absolute; width: 10px; height: 10px;
-            border: 2px solid #00ff41; pointer-events: none;
-        }
-        .cyber-border::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
-        .cyber-border::after { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
-        .huge-text { font-size: clamp(4rem, 15vw, 10rem); line-height: 0.8; }
-        
-        /* Ajuste de tamaño para inputs de bóveda */
-        .vault-input { 
-            background: #000; 
-            border: 2px solid #00f3ff; 
-            color: #00f3ff; 
-            width: 100%; 
-            text-align: center; 
-            font-size: 1.25rem; /* Reducido de 1.5rem */
-            outline: none; 
-            height: 3.5rem; /* Altura fija para consistencia */
-        }
-        
-        /* Scrollbar Personalizado */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0a; border-left: 1px solid #003300; }
-        ::-webkit-scrollbar-thumb { background: #00ff41; border-radius: 0; }
-        ::-webkit-scrollbar-thumb:hover { background: #00f3ff; }
 
-        .scan-animation { background: linear-gradient(0deg, transparent 0%, rgba(0, 243, 255, 0.1) 50%, transparent 100%); background-size: 100% 200%; animation: scan 3s linear infinite; position: absolute; inset: 0; pointer-events: none; }
-        @keyframes scan { 0% { background-position: 0 -100%; } 100% { background-position: 0 100%; } }
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; }
+        
+        body { 
+            background-color: var(--c-black); 
+            color: var(--c-green); 
+            font-family: var(--font-main); 
+            margin: 0; 
+            padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+            /* Efecto CRT Scanlines sutil en el fondo */
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+        }
+
+        /* Efecto Matrix de fondo */
+        .bg-matrix {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+            background-image: 
+                linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+        }
+
+        /* --- UTILITIES --- */
+        .hidden { display: none; }
+        .uppercase { text-transform: uppercase; }
+        .font-black { font-weight: 900; }
+        .relative { position: relative; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .w-full { width: 100%; }
+        .text-center { text-align: center; }
+
+        /* --- TYPOGRAPHY & GLOWS --- */
+        .text-cyber-green { color: var(--c-green); text-shadow: 0 0 5px var(--c-green-dim); }
+        .text-cyber-blue { color: var(--c-blue); text-shadow: 0 0 5px var(--c-blue-dim); }
+        .text-cyber-red { color: var(--c-red); text-shadow: 0 0 5px rgba(255, 0, 60, 0.3); }
+        .text-cyber-gold { color: var(--c-gold); text-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
+
+        .title-huge {
+            font-size: clamp(3rem, 10vw, 6rem);
+            line-height: 1;
+            font-weight: 900;
+            color: var(--c-green);
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--c-green), 0 0 20px var(--c-green-dim);
+            margin-bottom: 2rem;
+            letter-spacing: -2px;
+            animation: glitch 3s infinite alternate;
+        }
+
+        /* --- COMPONENTS --- */
+        
+        /* Contenedores con borde neón */
+        .cyber-border {
+            position: relative; 
+            border: 1px solid var(--c-green);
+            background: rgba(0, 0, 0, 0.85);
+            box-shadow: 0 0 15px var(--c-green-dim), inset 0 0 20px rgba(0,0,0,0.8);
+            padding: 1.5rem;
+            backdrop-filter: blur(2px);
+        }
+        /* Esquinas decorativas */
+        .cyber-border::before, .cyber-border::after {
+            content: ''; position: absolute; width: 8px; height: 8px;
+            background: var(--c-green); transition: 0.3s;
+        }
+        .cyber-border::before { top: -1px; left: -1px; box-shadow: 2px 2px 5px var(--c-green); }
+        .cyber-border::after { bottom: -1px; right: -1px; box-shadow: -2px -2px 5px var(--c-green); }
+
+        /* Botones */
+        .btn-cyber {
+            background: var(--c-blue); 
+            color: #000;
+            font-family: var(--font-main); 
+            font-weight: 800; 
+            font-size: 1.2rem;
+            text-transform: uppercase; 
+            padding: 1rem 2rem; 
+            width: 100%;
+            border: 2px solid var(--c-blue); 
+            cursor: pointer; 
+            transition: all 0.2s;
+            text-shadow: none;
+            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+            margin-top: 1rem;
+            letter-spacing: 1px;
+        }
+        .btn-cyber:hover { 
+            background: #fff; 
+            box-shadow: 0 0 25px var(--c-blue); 
+            transform: translateY(-2px);
+        }
+        .btn-cyber:disabled {
+            background: #333;
+            border-color: #555;
+            color: #777;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-start {
+            background: var(--c-green);
+            border-color: var(--c-green);
+            box-shadow: 0 0 15px var(--c-green-dim);
+        }
+
+        /* Inputs */
+        .input-cyber {
+            width: 100%; 
+            background: #000; 
+            border: 2px solid var(--c-green);
+            padding: 1rem; 
+            font-family: var(--font-main); 
+            font-size: 1.5rem;
+            color: var(--c-green); 
+            text-align: center; 
+            outline: none;
+            box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.1);
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .input-cyber:focus { 
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3), inset 0 0 10px rgba(0, 255, 65, 0.2); 
+            border-color: #fff;
+        }
+
+        /* Squad Cards */
+        .squad-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
+            gap: 0.8rem;
+            padding: 0.5rem;
+        }
+        @media(min-width: 768px) { .squad-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); } }
+
+        .squad-card {
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            background: rgba(0,0,0,0.6);
+            padding: 0.8rem; 
+            cursor: pointer; 
+            transition: 0.2s;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .squad-card:hover:not(:disabled) { 
+            border-color: var(--c-blue); 
+            background: rgba(0, 243, 255, 0.1); 
+            transform: scale(1.05);
+        }
+        .squad-card.selected { 
+            border-color: var(--c-blue); 
+            background: rgba(0, 243, 255, 0.25); 
+            box-shadow: 0 0 15px var(--c-blue-dim); 
+            transform: scale(1.1); 
+            z-index: 10; 
+        }
+        .squad-card:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
+        .squad-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .squad-name { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; color: var(--c-green); }
+
+        /* Pantalla central */
+        .screen-center {
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            padding: 1rem;
+            position: relative; 
+            z-index: 10;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--c-green); border: 1px solid #000; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--c-blue); }
+
+        /* Animaciones */
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 var(--c-red), -2px 0 var(--c-blue); }
+            90% { text-shadow: 2px 0 var(--c-red), -2px 0 var(--c-blue); }
+            91% { text-shadow: -2px 0 var(--c-red), 2px 0 var(--c-blue); transform: skew(10deg); }
+            92% { text-shadow: 0 0 0; transform: skew(0); }
+            100% { text-shadow: 2px 0 var(--c-red), -2px 0 var(--c-blue); }
+        }
+        .animate-pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Vault Inputs */
+        .vault-input {
+            background: #000; border: 2px solid var(--c-blue); color: var(--c-blue);
+            width: 100%; height: 3.5rem; font-size: 1.5rem; text-align: center;
+            font-family: var(--font-main); font-weight: 900;
+            text-shadow: 0 0 5px var(--c-blue);
+        }
+
+        /* Botón Ayuda Flotante */
+        .btn-help {
+            position: fixed; top: 1.5rem; left: 1.5rem; width: 3.5rem; height: 3.5rem;
+            border: 2px solid var(--c-blue); color: var(--c-blue);
+            border-radius: 50%; font-size: 1.8rem; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.5); cursor: pointer; z-index: 3000;
+            transition: 0.3s; box-shadow: 0 0 10px var(--c-blue-dim);
+        }
+        .btn-help:hover { background: var(--c-blue); color: #000; box-shadow: 0 0 20px var(--c-blue); }
+
+        /* Preloader */
+        #preloader {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--c-red); font-family: monospace; text-align: center;
+        }
     </style>
+
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.3",
-    "react/": "https://esm.sh/react@^19.2.3/"
+    "react": "./js/react.js",
+    "react/": "./js/react.js"
   }
 }
 </script>
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
+    <!-- Capas de fondo -->
+    <div class="bg-matrix"></div>
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; z-index:999;"></div>
+
+    <!-- Preloader por si falla JS -->
+    <div id="preloader">
+        <h1 style="font-size:2rem; margin-bottom:1rem;">CARGANDO SISTEMA...</h1>
+        <p style="color:#666;">Si esto no desaparece, verifica que la carpeta <br> <b>/js</b> existe y contiene los 4 archivos.</p>
+    </div>
+
     <div id="root"></div>
-    <div class="crt-overlay"></div>
 
     <script type="text/babel">
+        // Ocultar preloader cuando React inicia
+        document.getElementById('preloader').style.display = 'none';
+
         const { useState, useEffect, useRef } = React;
 
-        // SISTEMA DE AUDIO "CAJA NEGRA"
-        // El navegador no puede "ver" los archivos, así que definimos una lista de POSIBLES nombres.
-        // El juego probará estos nombres aleatoriamente. Si el archivo existe, suena. Si no, salta al siguiente.
-        const POTENTIAL_TRACKS = [
-            "./audio/background.mp3",
-            "./audio/music.mp3",
-            "./audio/cyber.mp3",
-            "./audio/track1.mp3",
-            "./audio/track2.mp3",
-            "./audio/track3.mp3",
-            "./audio/track4.mp3",
-            "./audio/track5.mp3"
-        ];
-
-        // Variable global para el contexto de audio
+        // --- AUDIO SYSTEM ---
+        const POTENTIAL_TRACKS = ["./audio/background.mp3", "./audio/music.mp3", "./audio/cyber.mp3", "./audio/track1.mp3", "./audio/track2.mp3"];
         let globalAudioCtx = null;
-        // Referencia global para los nodos del oscilador (para poder detenerlos/ajustar volumen)
         let droneNodes = null;
 
         const getAudioContext = () => {
-            if (!globalAudioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (AudioContext) globalAudioCtx = new AudioContext();
-            }
-            if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
-                globalAudioCtx.resume();
-            }
+            if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
             return globalAudioCtx;
         };
 
-        // Generador de Ambiente Cyberpunk (Fallback si no hay mp3)
         const startCyberpunkDrone = (vol = 0.3) => {
             const ctx = getAudioContext();
-            if (!ctx || droneNodes) return; // Ya está sonando o no hay contexto
-
-            // Creamos 2 osciladores para un sonido "Deep Drone"
-            const osc1 = ctx.createOscillator();
-            const osc2 = ctx.createOscillator();
+            if (!ctx || droneNodes) return;
+            const osc1 = ctx.createOscillator(); osc1.type = 'sawtooth'; osc1.frequency.value = 50;
+            const osc2 = ctx.createOscillator(); osc2.type = 'sawtooth'; osc2.frequency.value = 51;
             const gainNode = ctx.createGain();
-            const filter = ctx.createBiquadFilter();
-
-            // Configuración Oscuro/Cyberpunk
-            osc1.type = 'sawtooth';
-            osc1.frequency.value = 50; // Bajos profundos
-            
-            osc2.type = 'sawtooth';
-            osc2.frequency.value = 51; // Ligero detune para efecto chorus natural
-
-            filter.type = 'lowpass';
-            filter.frequency.value = 250; // Filtramos los agudos molestos
-            filter.Q.value = 1;
-
-            // Cadena de conexión
-            osc1.connect(filter);
-            osc2.connect(filter);
-            filter.connect(gainNode);
-            gainNode.connect(ctx.destination);
-
-            // LFO para mover el filtro suavemente (darle vida)
-            const lfo = ctx.createOscillator();
-            lfo.type = 'sine';
-            lfo.frequency.value = 0.1; // Muy lento
-            const lfoGain = ctx.createGain();
-            lfoGain.gain.value = 100;
-            lfo.connect(lfoGain);
-            lfoGain.connect(filter.frequency);
-
+            const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 250;
+            osc1.connect(filter); osc2.connect(filter); filter.connect(gainNode); gainNode.connect(ctx.destination);
             gainNode.gain.setValueAtTime(0, ctx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(vol * 0.3, ctx.currentTime + 2); // Fade in suave
-
-            osc1.start();
-            osc2.start();
-            lfo.start();
-
-            droneNodes = { osc1, osc2, lfo, gainNode };
-            console.log(">> AUDIO SYSTEM: Fallback Drone Activated");
+            gainNode.gain.linearRampToValueAtTime(vol * 0.3, ctx.currentTime + 2);
+            osc1.start(); osc2.start();
+            droneNodes = { osc1, osc2, gainNode };
         };
 
         const stopCyberpunkDrone = () => {
             if (droneNodes) {
-                const { osc1, osc2, lfo, gainNode } = droneNodes;
-                const ctx = getAudioContext();
-                // Fade out
                 try {
-                    gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + 1);
-                    setTimeout(() => {
-                        osc1.stop(); osc2.stop(); lfo.stop();
-                    }, 1000);
-                } catch(e) {}
+                    droneNodes.gainNode.gain.linearRampToValueAtTime(0, getAudioContext().currentTime + 1);
+                    setTimeout(() => { droneNodes.osc1.stop(); droneNodes.osc2.stop(); }, 1000);
+                } catch(e){}
                 droneNodes = null;
             }
         };
 
-        const updateDroneVolume = (vol) => {
-            if (droneNodes && droneNodes.gainNode) {
-                const ctx = getAudioContext();
-                droneNodes.gainNode.gain.setTargetAtTime(vol * 0.3, ctx.currentTime, 0.1);
-            }
-        };
-
-        // Generador de Sonidos SFX (Click, Success, Error)
         const synthSFX = (type, vol = 0.5) => {
             try {
                 const ctx = getAudioContext();
                 if (!ctx) return;
-
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
-                
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                
+                osc.connect(gain); gain.connect(ctx.destination);
                 const now = ctx.currentTime;
                 
                 if (type === 'click') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(800, now);
-                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
-                    gain.gain.setValueAtTime(vol * 0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-                    osc.start(now);
-                    osc.stop(now + 0.05);
-                } 
-                else if (type === 'success') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(440, now);
-                    osc.frequency.linearRampToValueAtTime(880, now + 0.1);
-                    gain.gain.setValueAtTime(0, now);
-                    gain.gain.linearRampToValueAtTime(vol * 0.2, now + 0.1);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-                    osc.start(now);
-                    osc.stop(now + 0.6);
-                    
-                    const osc2 = ctx.createOscillator();
-                    const gain2 = ctx.createGain();
-                    osc2.connect(gain2);
-                    gain2.connect(ctx.destination);
-                    osc2.type = 'sine';
-                    osc2.frequency.setValueAtTime(554.37, now);
-                    osc2.frequency.linearRampToValueAtTime(1108.73, now + 0.1);
-                    gain2.gain.setValueAtTime(0, now);
-                    gain2.gain.linearRampToValueAtTime(vol * 0.1, now + 0.1);
-                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-                    osc2.start(now);
-                    osc2.stop(now + 0.6);
-                } 
-                else if (type === 'error') {
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(150, now);
-                    osc.frequency.linearRampToValueAtTime(50, now + 0.3);
-                    gain.gain.setValueAtTime(vol * 0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    osc.start(now);
-                    osc.stop(now + 0.3);
+                    osc.type = 'square'; osc.frequency.setValueAtTime(800, now);
+                    gain.gain.setValueAtTime(vol*0.1, now); osc.stop(now + 0.05);
+                } else if (type === 'success') {
+                    osc.type = 'triangle'; osc.frequency.linearRampToValueAtTime(880, now + 0.1);
+                    gain.gain.setValueAtTime(vol*0.2, now); osc.stop(now + 0.6);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now+0.3);
+                    gain.gain.setValueAtTime(vol*0.2, now); osc.stop(now + 0.3);
                 }
-                else if (type === 'access') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(1200, now);
-                    osc.frequency.linearRampToValueAtTime(2400, now + 0.1);
-                    gain.gain.setValueAtTime(vol * 0.05, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                    osc.start(now);
-                    osc.stop(now + 0.2);
-                }
-            } catch (e) {
-                console.error("Audio Context Error", e);
-            }
+                osc.start(now);
+            } catch(e) {}
         };
 
-        // EXPANDED SQUADS TO 30
+        // --- GAME DATA ---
         const SQUADS = [
-            { name: 'Cobra', icon: '🐍' }, { name: 'Tigre', icon: '🐅' },
-            { name: 'Halcón', icon: '🦅' }, { name: 'Lobo', icon: '🐺' },
-            { name: 'Tiburón', icon: '🦈' }, { name: 'Águila', icon: '🦅' },
-            { name: 'Pantera', icon: '🐆' }, { name: 'Oso', icon: '🐻' },
-            { name: 'León', icon: '🦁' }, { name: 'Dragón', icon: '🐉' },
-            { name: 'Fénix', icon: '🐦‍🔥' }, { name: 'Toro', icon: '🐂' },
-            { name: 'Rino', icon: '🦏' }, { name: 'Zorro', icon: '🦊' },
-            { name: 'Búho', icon: '🦉' }, { name: 'Gorila', icon: '🦍' },
-            { name: 'Araña', icon: '🕷️' }, { name: 'Escorpión', icon: '🦂' },
-            { name: 'Cuervo', icon: '🐦‍⬛' }, { name: 'Pulpo', icon: '🐙' },
-            { name: 'Elefante', icon: '🐘' }, { name: 'Caballo', icon: '🐎' },
-            { name: 'Ciervo', icon: '🦌' }, { name: 'Cisne', icon: '🦢' },
-            { name: 'Camaleón', icon: '🦎' }, { name: 'Tortuga', icon: '🐢' },
-            { name: 'Pingüino', icon: '🐧' }, { name: 'Murciélago', icon: '🦇' },
-            { name: 'Cangrejo', icon: '🦀' }, { name: 'Medusa', icon: '🪼' }
+            { name: 'Cobra', icon: '🐍' }, { name: 'Tigre', icon: '🐅' }, { name: 'Halcón', icon: '🦅' }, 
+            { name: 'Lobo', icon: '🐺' }, { name: 'Tiburón', icon: '🦈' }, { name: 'Águila', icon: '🦅' },
+            { name: 'Pantera', icon: '🐆' }, { name: 'Oso', icon: '🐻' }, { name: 'León', icon: '🦁' }, 
+            { name: 'Dragón', icon: '🐉' }, { name: 'Fénix', icon: '🐦‍🔥' }, { name: 'Toro', icon: '🐂' },
+            { name: 'Rino', icon: '🦏' }, { name: 'Zorro', icon: '🦊' }, { name: 'Búho', icon: '🦉' }, 
+            { name: 'Gorila', icon: '🦍' }, { name: 'Araña', icon: '🕷️' }, { name: 'Escorpión', icon: '🦂' },
+            { name: 'Cuervo', icon: '🐦‍⬛' }, { name: 'Pulpo', icon: '🐙' }, { name: 'Elefante', icon: '🐘' }, 
+            { name: 'Caballo', icon: '🐎' }, { name: 'Ciervo', icon: '🦌' }, { name: 'Cisne', icon: '🦢' },
+            { name: 'Camaleón', icon: '🦎' }, { name: 'Tortuga', icon: '🐢' }, { name: 'Pingüino', icon: '🐧' }, 
+            { name: 'Murciélago', icon: '🦇' }, { name: 'Cangrejo', icon: '🦀' }, { name: 'Medusa', icon: '🪼' }
         ];
-
-        const EXAMPLE_CSV = `Tipo;Pregunta;R1;R2;R3;R4;Tiempo;Correcta;URL Imagen
-quiz;¿Qué operador repite cadenas en Python?;*;x;repeat();**;30;1;
-quiz;¿Qué método especial se ejecuta al crear un objeto?;__init__;__start__;constructor;__new__;30;1;
-quiz;¿Qué operador concatena cadenas en Python?;+;concat();join;.;30;1;
-quiz;¿Cómo se define una función en Python?;def;func;function;define;30;1;
-quiz;¿Qué tipo de dato es [1, 2, 3]?;Lista;Tupla;Diccionario;Set;30;1;
-quiz;¿Cómo se importa un módulo?;import;use;require;include;30;1;
-quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
 
         const formatTime = (ms) => {
             if (!ms) return "00:00";
-            const totalSeconds = Math.floor(ms / 1000);
-            const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-            const secs = (totalSeconds % 60).toString().padStart(2, '0');
-            return `${mins}:${secs}`;
+            const s = Math.floor(ms / 1000);
+            return `${Math.floor(s / 60).toString().padStart(2,'0')}:${(s % 60).toString().padStart(2,'0')}`;
         };
 
-        const Typewriter = ({ text, speed = 25, className }) => {
-            const [disp, setDisp] = useState('');
+        const Typewriter = ({ text, className }) => {
+            const [d, setD] = useState('');
             useEffect(() => {
-                let i = 0;
-                const timer = setInterval(() => {
-                    if (i < text.length) { setDisp(t => t + text.charAt(i)); i++; }
-                    else clearInterval(timer);
-                }, speed);
-                return () => clearInterval(timer);
+                let i = 0; const t = setInterval(() => {
+                    if (i < text.length) setD(x => x + text.charAt(i++)); else clearInterval(t);
+                }, 30);
+                return () => clearInterval(t);
             }, [text]);
-            return <div className={className}>{disp}<span className="animate-pulse inline-block w-2 h-5 bg-cyber-green ml-1 align-middle"></span></div>;
+            return <div className={className}>{d}<span className="animate-pulse">_</span></div>;
         };
 
-        const INITIAL_STATE = {
-            stage: 'selection',
-            roomId: '',
-            rawQuestions: [],
-            connectedSquads: [],
-            finishedSquads: [],
-            takenSquads: [],
-            sectors: [],
-            squadAnimal: null,
-            isSquadSelecting: false,
-            finalRank: 0,
-            finalTime: 0
-        };
+        const INITIAL_STATE = { stage: 'selection', roomId: '', connectedSquads: [], finishedSquads: [], takenSquads: [], sectors: [], squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0 };
 
         function App() {
             const [gameState, setGameState] = useState(INITIAL_STATE);
             const [volume, setVolume] = useState(0.4);
-            const [isMuted, setIsMuted] = useState(true);
             const [lockout, setLockout] = useState(0);
             const [activeSectorId, setActiveSectorId] = useState(null);
             const [vaultCodes, setVaultCodes] = useState(['','','','','']);
-            const [audioSource, setAudioSource] = useState('ESPERANDO...');
             const [showHelp, setShowHelp] = useState(false);
             
-            const audioRef = useRef(null);
             const peerRef = useRef(null);
             const connRef = useRef(null);
             const adminConns = useRef([]);
-            const connectedSquadsRef = useRef([]); 
-            const finishedSquadsRef = useRef([]);
             const startTimeRef = useRef(null);
-            const currentTrackIdx = useRef(0);
-            const usingDroneRef = useRef(false);
-            const retryCountRef = useRef(0); 
 
-            // Función centralizada de SFX con validación de contexto
-            const playSFX = (type) => {
-                getAudioContext(); 
-                if (isMuted) return;
-                synthSFX(type, volume);
-            };
-
-            const initMusic = () => {
-                const ctx = getAudioContext(); 
-                if (!ctx) return;
-                if (audioRef.current || droneNodes) return;
-                
-                const playRandomTrack = () => {
-                    if (retryCountRef.current > POTENTIAL_TRACKS.length * 2) {
-                         console.warn(">> Ningún archivo MP3 válido encontrado. Activando Drone Cyberpunk.");
-                         usingDroneRef.current = true;
-                         setAudioSource('SINTETIZADOR DE RESPALDO (NO MP3)');
-                         startCyberpunkDrone(volume);
-                         return;
-                    }
-
-                    let nextIdx;
-                    do {
-                        nextIdx = Math.floor(Math.random() * POTENTIAL_TRACKS.length);
-                    } while (POTENTIAL_TRACKS.length > 1 && nextIdx === currentTrackIdx.current && retryCountRef.current < 5);
-                    
-                    currentTrackIdx.current = nextIdx;
-                    const trackPath = POTENTIAL_TRACKS[nextIdx];
-                    const trackName = trackPath.split('/').pop();
-                    
-                    const audio = new Audio(trackPath);
-                    audio.volume = volume;
-                    
-                    audio.onended = () => {
-                        retryCountRef.current = 0; 
-                        playRandomTrack();
-                    };
-                    
-                    audio.onerror = (e) => {
-                        console.log(`Pista no encontrada: ${trackPath}. Probando siguiente...`);
-                        retryCountRef.current += 1;
-                        playRandomTrack(); 
-                    };
-
-                    audio.oncanplaythrough = () => {
-                        retryCountRef.current = 0; 
-                        usingDroneRef.current = false;
-                        setAudioSource(`REPRODUCIENDO: ${trackName}`);
-                        stopCyberpunkDrone(); 
-                    };
-
-                    audioRef.current = audio;
-                    audio.play().catch(e => console.log("Esperando interacción user...", e));
-                };
-                
-                playRandomTrack();
-                setIsMuted(false); 
-            };
+            const playSFX = (t) => synthSFX(t, volume);
 
             useEffect(() => {
-                if (usingDroneRef.current) {
-                    if (isMuted) stopCyberpunkDrone();
-                    else startCyberpunkDrone(volume);
-                    updateDroneVolume(volume);
-                } else if (audioRef.current) {
-                    audioRef.current.volume = volume;
-                    if (isMuted) audioRef.current.pause();
-                    else audioRef.current.play().catch(() => {});
-                }
-            }, [isMuted, volume]);
-
-            useEffect(() => {
-                if (lockout <= 0) return;
-                const timer = setInterval(() => setLockout(p => p - 1), 1000);
-                return () => clearInterval(timer);
+                if (lockout > 0) { const t = setInterval(() => setLockout(l => l-1), 1000); return () => clearInterval(t); }
             }, [lockout]);
 
-            const downloadCSV = () => {
-                const blob = new Blob([EXAMPLE_CSV], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = 'mision_ejemplo.csv'; a.click();
-            };
-
-            const handleStartAdmin = (file) => {
-                initMusic(); 
-                if (!file) return alert("Archivo de misión requerido");
+            const startAdmin = (file) => {
+                startCyberpunkDrone(volume);
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const lines = e.target.result.trim().split('\n');
-                    const questions = lines.slice(1).map((line, i) => {
-                        const p = line.split(';').map(x => x.trim().replace(/^"|"$/g, ''));
-                        return { id: `q-${i}`, question: p[1], options: [p[2], p[3], p[4], p[5]], correctIndex: (parseInt(p[7]) || 1) - 1, imageUrl: p[8] || null };
+                    const questions = lines.slice(1).map((l, i) => {
+                        const p = l.split(';').map(x => x.trim().replace(/^"|"$/g, ''));
+                        return { id: i, question: p[1], options: [p[2],p[3],p[4],p[5]], correctIndex: (parseInt(p[7])||1)-1, imageUrl: p[8] };
                     }).filter(q => q.question);
-
+                    
                     const id = Math.floor(10000 + Math.random() * 90000).toString();
-                    
                     const peer = new Peer(`sr-host-${id}`);
-                    
-                    peer.on('open', () => {
-                        setGameState(s => ({...s, stage: 'admin-lobby', roomId: id, rawQuestions: questions}));
-                    });
-
-                    peer.on('error', (err) => {
-                        console.error("PeerJS Error:", err);
-                        alert("Error de conexión: " + err.type);
-                    });
-
+                    peer.on('open', () => setGameState(s => ({...s, stage: 'admin-lobby', roomId: id, rawQuestions: questions})));
                     peer.on('connection', c => {
-                        c.on('open', () => {
-                            adminConns.current.push(c);
-                            c.send({type: 'SYNC', taken: connectedSquadsRef.current});
-                        });
+                        c.on('open', () => { adminConns.current.push(c); c.send({type:'SYNC', taken: gameState.connectedSquads}); });
                         c.on('data', d => {
-                            if (d.type === 'REQ') {
-                                if (connectedSquadsRef.current.includes(d.name)) {
-                                    c.send({type:'NO'});
-                                } else {
+                            if(d.type==='REQ') {
+                                if(gameState.connectedSquads.includes(d.name)) c.send({type:'NO'});
+                                else {
                                     c.send({type:'OK'});
-                                    connectedSquadsRef.current = [...connectedSquadsRef.current, d.name];
-                                    setGameState(s => ({...s, connectedSquads: connectedSquadsRef.current}));
-                                    adminConns.current.forEach(conn => {
-                                        if(conn.open) conn.send({type:'SYNC', taken: connectedSquadsRef.current});
+                                    setGameState(prev => {
+                                        const next = [...prev.connectedSquads, d.name];
+                                        adminConns.current.forEach(ac => ac.open && ac.send({type:'SYNC', taken: next}));
+                                        return {...prev, connectedSquads: next};
                                     });
                                 }
                             }
-                            if (d.type === 'FIN') {
-                                const finalTime = Date.now() - startTimeRef.current;
-                                const newFinished = [...finishedSquadsRef.current, {name: d.name, time: finalTime}];
-                                finishedSquadsRef.current = newFinished; 
-                                const rank = newFinished.length; 
-                                
-                                setGameState(s => ({...s, finishedSquads: newFinished}));
-                                c.send({type: 'WIN_DATA', rank: rank, time: finalTime});
+                            if(d.type==='FIN') {
+                                const time = Date.now() - startTimeRef.current;
+                                setGameState(prev => {
+                                    const nextFin = [...prev.finishedSquads, {name:d.name, time}];
+                                    c.send({type:'WIN_DATA', rank: nextFin.length, time});
+                                    return {...prev, finishedSquads: nextFin};
+                                });
                             }
-                        });
-                        c.on('close', () => {
-                            adminConns.current = adminConns.current.filter(conn => conn !== c);
                         });
                     });
                     peerRef.current = peer;
@@ -506,470 +441,318 @@ quiz;¿Qué palabra clave maneja excepciones?;try;catch;handle;error;30;1;`;
                 reader.readAsText(file);
             };
 
-            const handleConnectSquad = (rid) => {
-                getAudioContext(); 
-                if (!rid) return;
+            const joinSquad = (rid) => {
+                startCyberpunkDrone(volume);
                 const peer = new Peer();
                 peer.on('open', () => {
-                    const c = peer.connect(`sr-host-${rid.toUpperCase()}`);
-                    c.on('open', () => {
-                        connRef.current = c;
-                    });
+                    const c = peer.connect(`sr-host-${rid}`);
+                    c.on('open', () => connRef.current = c);
                     c.on('data', d => {
-                        if (d.type === 'SYNC') {
-                            setGameState(s => {
-                                const canUpdateStage = s.stage === 'selection' || s.stage === 'squad-selection';
-                                return {
-                                    ...s,
-                                    stage: canUpdateStage ? 'squad-selection' : s.stage,
-                                    takenSquads: d.taken
-                                };
-                            });
-                        }
-                        if (d.type === 'OK') setGameState(s => ({...s, stage: 'squad-lobby'}));
-                        if (d.type === 'NO') {
-                            alert("Esa unidad ya ha sido tomada.");
-                            setGameState(s => ({...s, isSquadSelecting: false, squadAnimal: null}));
-                        }
-                        if (d.type === 'GO') setGameState(s => ({...s, stage: 'squad-intro', sectors: d.sectors}));
-                        if (d.type === 'WIN_DATA') {
-                             setGameState(s => ({
-                                 ...s, 
-                                 stage: 'squad-win', 
-                                 finalRank: d.rank, 
-                                 finalTime: d.time 
-                             }));
-                        }
+                        if(d.type==='SYNC') setGameState(s => ({...s, takenSquads: d.taken, stage: s.stage === 'selection' ? 'squad-selection' : s.stage}));
+                        if(d.type==='OK') setGameState(s => ({...s, stage: 'squad-lobby'}));
+                        if(d.type==='NO') { alert("Ocupado"); setGameState(s => ({...s, isSquadSelecting: false})); }
+                        if(d.type==='GO') setGameState(s => ({...s, stage: 'squad-intro', sectors: d.sectors}));
+                        if(d.type==='WIN_DATA') setGameState(s => ({...s, stage: 'squad-win', finalRank: d.rank, finalTime: d.time}));
                     });
-                });
-                peer.on('error', (err) => {
-                    console.error("PeerJS Error:", err);
-                    alert("Error al conectar: " + err.type);
                 });
                 peerRef.current = peer;
             };
 
-            const resetGame = () => {
+            const reset = () => {
                 if(peerRef.current) peerRef.current.destroy();
-                stopCyberpunkDrone(); 
-                if(audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-                adminConns.current = [];
-                connectedSquadsRef.current = [];
-                finishedSquadsRef.current = [];
-                setAudioSource('ESPERANDO...');
+                stopCyberpunkDrone();
                 setGameState(INITIAL_STATE);
             };
 
             if (lockout > 0) return (
-                <div className="fixed inset-0 z-[5000] bg-black animate-alarm flex flex-col items-center justify-center font-mono">
-                    <div className="text-cyber-red text-8xl font-black mb-8 animate-glitch">BLOQUEO</div>
-                    <div className="text-white text-9xl">{lockout}</div>
+                <div style={{position:'fixed', inset:0, background:'black', zIndex:5000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'var(--c-red)'}}>
+                    <div className="title-huge" style={{color:'var(--c-red)', fontSize:'5rem'}}>BLOQUEO</div>
+                    <div style={{fontSize:'8rem', fontWeight:'900'}}>{lockout}</div>
                 </div>
             );
 
-            const showAudioControls = gameState.stage.startsWith('admin');
+            // RENDER LOGIC
+            return (
+                <div className="relative w-full h-full">
+                    {/* Help Button */}
+                    {gameState.stage === 'selection' && (
+                        <button onClick={() => setShowHelp(true)} className="btn-help">?</button>
+                    )}
 
-            const renderContent = () => {
-                switch(gameState.stage) {
-                    case 'selection':
-                        return (
-                            <div className="text-center z-10 px-4 w-full max-w-4xl">
-                                <h1 className="text-7xl md:text-[8rem] font-black text-cyber-green animate-glitch mb-10 uppercase font-mono tracking-tighter leading-none">Scape Room</h1>
-                                
-                                <div className="cyber-border p-12 bg-black/80 backdrop-blur-md shadow-[0_0_50px_rgba(0,255,65,0.1)] mb-12">
-                                    <h2 className="text-3xl text-cyber-blue mb-8 font-black uppercase tracking-[0.2em] border-b border-cyber-blue/30 pb-4">Unirse a la Red</h2>
-                                    <div className="flex flex-col gap-6">
-                                        <input id="landing-room-id" type="number" maxLength={5} placeholder="CÓDIGO DE MISIÓN (ID)" className="w-full bg-black border-2 border-cyber-blue p-6 text-center text-4xl font-black text-white outline-none focus:shadow-[0_0_30px_#00f3ff] transition-all" />
-                                        <button onClick={() => handleConnectSquad(document.getElementById('landing-room-id').value)} className="w-full bg-cyber-blue text-black font-black py-6 text-2xl uppercase hover:bg-white hover:scale-[1.01] transition-all">INICIAR ENLACE</button>
-                                    </div>
-                                    <div className="mt-8">
-                                        <button onClick={downloadCSV} className="text-xs text-gray-500 hover:text-cyber-gold transition-colors font-mono tracking-widest">[ DESCARGAR DATOS EJEMPLO .CSV ]</button>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <button onClick={() => setGameState(s => ({...s, stage: 'admin-setup'}))} className="text-cyber-green/50 hover:text-cyber-green text-sm font-bold uppercase tracking-[0.3em] border-b border-transparent hover:border-cyber-green transition-all pb-1">
-                                        // CREAR NUEVA MISIÓN (ADMIN)
-                                    </button>
-                                </div>
-                                <p className="mt-8 text-[10px] text-gray-600 uppercase italic font-mono opacity-50">v1.2.9 // MASSIVE MULTIPLAYER READY</p>
+                    {/* Help Modal */}
+                    {showHelp && (
+                        <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.9)', zIndex:4000, display:'flex', alignItems:'center', justifyContent:'center'}}>
+                            <div className="cyber-border" style={{maxWidth:'500px', width:'90%'}}>
+                                <h2 className="text-cyber-blue" style={{fontSize:'2rem', marginBottom:'1rem'}}>PROTOCOLO</h2>
+                                <ul style={{listStyle:'none', padding:0, lineHeight:'1.8'}}>
+                                    <li>1. Ingresa ID de Misión.</li>
+                                    <li>2. Elige Avatar (Rápido, son únicos).</li>
+                                    <li>3. Responde preguntas para hackear.</li>
+                                    <li>4. Obtén códigos y escapa.</li>
+                                </ul>
+                                <button onClick={() => setShowHelp(false)} className="btn-cyber" style={{borderColor:'var(--c-red)', color:'var(--c-red)'}}>CERRAR</button>
                             </div>
-                        );
-                    case 'admin-setup':
-                        return (
-                            <div className="cyber-border p-10 bg-black max-w-lg w-full z-10 relative">
-                                <h2 className="text-3xl text-cyber-green mb-10 font-black uppercase border-b border-cyber-green/30 pb-4">Configurar Misión</h2>
-                                
-                                <div className="mb-6 cyber-border p-4 bg-cyber-green/5">
-                                    <label className="block text-cyber-blue text-sm mb-2 font-bold uppercase">♪ SISTEMA DE AUDIO AUTOMÁTICO</label>
-                                    <p className="text-[10px] text-gray-400 font-mono mb-2">
-                                        Coloca tus archivos .mp3 en la carpeta <b>/audio</b> y asegúrate de que tengan alguno de estos nombres:
-                                    </p>
-                                    <ul className="text-[10px] text-cyber-green font-mono list-disc pl-4 mb-2">
-                                        <li>background.mp3, music.mp3, cyber.mp3</li>
-                                        <li>track1.mp3 ... track5.mp3</li>
-                                    </ul>
-                                    <div className="mt-2 text-[10px] text-cyber-gold font-mono">{audioSource}</div>
-                                </div>
+                        </div>
+                    )}
 
-                                <div className="mb-8">
-                                    <label className="block text-cyber-blue text-sm mb-2 font-bold uppercase">Archivo de Preguntas (.CSV)</label>
-                                    <input id="admin-file" type="file" accept=".csv" className="text-xs block w-full text-gray-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-cyber-green/20 file:text-cyber-green hover:file:bg-cyber-green/30" />
+                    {/* STAGES */}
+                    {gameState.stage === 'selection' && (
+                        <div className="screen-center">
+                            <h1 className="title-huge text-center">SCAPE ROOM</h1>
+                            <div className="cyber-border" style={{width:'100%', maxWidth:'500px'}}>
+                                <div className="flex-col" style={{gap:'1rem'}}>
+                                    <input id="rid" type="text" placeholder="ID MISIÓN" maxLength={5} className="input-cyber" />
+                                    <button onClick={() => joinSquad(document.getElementById('rid').value)} className="btn-cyber">INICIAR ENLACE</button>
                                 </div>
-                                
-                                <button onClick={() => {
-                                    const file = document.getElementById('admin-file').files[0];
-                                    handleStartAdmin(file);
-                                }} className="w-full bg-cyber-green text-black font-black py-5 text-xl uppercase hover:scale-[1.02] transition-transform shadow-[0_0_20px_rgba(0,255,65,0.2)]">Establecer Nodo</button>
-                                <button onClick={resetGame} className="w-full mt-6 text-xs text-gray-600 uppercase hover:text-white transition-colors">Cancelar y Volver</button>
+                                <div style={{marginTop:'2rem', borderTop:'1px solid #333', paddingTop:'1rem'}}>
+                                    <button onClick={() => setGameState(s => ({...s, stage: 'admin-setup'}))} style={{background:'none', border:'none', color:'var(--c-green)', opacity:0.5, width:'100%', fontSize:'0.8rem', cursor:'pointer'}}>// ACCESO ADMIN //</button>
+                                </div>
                             </div>
-                        );
-                    case 'admin-lobby':
-                        return (
-                            <div className="flex flex-col items-center z-10 w-full max-w-5xl px-4">
-                                <p className="text-cyber-blue text-sm uppercase tracking-widest mb-4 font-mono">COMPARTIR ID CON ESCUADRONES</p>
-                                <div className="huge-text font-black text-cyber-green border-4 border-cyber-green px-12 py-10 bg-cyber-green/5 mb-16 shadow-[0_0_50px_rgba(0,255,65,0.2)] tracking-wider">{gameState.roomId}</div>
-                                <div className="grid md:grid-cols-2 gap-8 w-full">
-                                    <div className="cyber-border p-8 bg-black/80 font-mono h-64 overflow-y-auto custom-scrollbar">
-                                        <h3 className="text-cyber-blue uppercase mb-6 font-bold text-sm sticky top-0 bg-black pb-2 border-b border-cyber-blue/20">Unidades Conectadas: {gameState.connectedSquads.length}</h3>
-                                        <div className="flex flex-wrap gap-2">{gameState.connectedSquads.map(s => <div key={s} className="px-3 py-1 text-sm border border-cyber-green bg-cyber-green/10 font-bold animate-pulse">{s}</div>)}</div>
+                        </div>
+                    )}
+
+                    {gameState.stage === 'admin-setup' && (
+                        <div className="screen-center">
+                            <div className="cyber-border" style={{width:'100%', maxWidth:'500px'}}>
+                                <h2 className="text-cyber-green" style={{fontSize:'1.5rem', marginBottom:'1.5rem'}}>CONFIGURAR NODO</h2>
+                                <input id="csvFile" type="file" accept=".csv" style={{color:'#888', marginBottom:'1.5rem', width:'100%'}} />
+                                <button onClick={() => startAdmin(document.getElementById('csvFile').files[0])} className="btn-cyber btn-start">LANZAR SERVIDOR</button>
+                                <button onClick={reset} style={{background:'none', border:'none', color:'#666', marginTop:'1rem', width:'100%', cursor:'pointer'}}>CANCELAR</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {gameState.stage === 'admin-lobby' && (
+                        <div className="screen-center">
+                            <div className="uppercase text-cyber-blue" style={{marginBottom:'0.5rem'}}>ID DE MISIÓN</div>
+                            <div style={{fontSize:'4rem', fontWeight:'900', color:'var(--c-green)', border:'2px solid var(--c-green)', padding:'1rem 3rem', marginBottom:'2rem', background:'#000'}}>{gameState.roomId}</div>
+                            
+                            <div className="cyber-border" style={{width:'100%', maxWidth:'800px', height:'400px', display:'flex', flexDirection:'column'}}>
+                                <div style={{flex:1, overflowY:'auto', padding:'1rem'}}>
+                                    <h3 className="text-cyber-blue" style={{borderBottom:'1px solid #333', paddingBottom:'0.5rem', marginBottom:'1rem'}}>UNIDADES ({gameState.connectedSquads.length})</h3>
+                                    <div style={{display:'flex', flexWrap:'wrap', gap:'0.5rem'}}>
+                                        {gameState.connectedSquads.map(s => <span key={s} style={{background:'rgba(0,255,65,0.1)', color:'var(--c-green)', padding:'0.2rem 0.6rem', border:'1px solid var(--c-green)', fontSize:'0.9rem'}}>{s}</span>)}
                                     </div>
-                                    <button onClick={() => {
+                                </div>
+                                <button 
+                                    onClick={() => {
                                         playSFX('access');
                                         startTimeRef.current = Date.now();
-                                        
+                                        const qs = gameState.rawQuestions;
                                         adminConns.current.forEach(c => {
-                                            const shuffled = [...gameState.rawQuestions].sort(() => Math.random() - 0.5);
-                                            const sectors = [1,2,3,4,5].map(i => ({
-                                                id: i, questions: shuffled.slice((i-1)*4, i*4), isSolved: false, accessCode: Math.floor(Math.random()*90+10).toString()
-                                            }));
+                                            const shuffled = [...qs].sort(()=>Math.random()-.5);
+                                            const sectors = [1,2,3,4,5].map(i => ({ id: i, questions: shuffled.slice((i-1)*4, i*4), accessCode: Math.floor(Math.random()*90+10).toString(), isSolved: false }));
                                             c.send({type:'GO', sectors});
                                         });
-
                                         setGameState(s => ({...s, stage: 'admin-monitor', sectors: []}));
-                                    }} disabled={gameState.connectedSquads.length === 0} className={`w-full h-full text-5xl font-black uppercase transition-all ${gameState.connectedSquads.length > 0 ? 'bg-cyber-green text-black shadow-[0_0_40px_#00ff41] hover:bg-white' : 'bg-gray-900 text-gray-700 cursor-not-allowed border border-gray-800'}`}>INICIAR MISIÓN</button>
-                                </div>
-                                <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-600">AUDIO SOURCE: {audioSource}</div>
+                                    }}
+                                    disabled={gameState.connectedSquads.length === 0}
+                                    className="btn-cyber btn-start"
+                                >
+                                    INICIAR MISIÓN
+                                </button>
                             </div>
-                        );
-                    case 'squad-selection':
-                        return (
-                            <div className="z-10 w-full max-w-7xl px-4 text-center">
-                                <h2 className="text-4xl text-cyber-blue mb-8 font-black uppercase tracking-widest font-mono">Selección de Unidad ({gameState.takenSquads.length}/30)</h2>
-                                
-                                <div className="overflow-y-auto max-h-[60vh] cyber-border p-6 bg-black/50 custom-scrollbar mb-8">
-                                    <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
-                                        {SQUADS.map(s => {
-                                            const isTaken = gameState.takenSquads.includes(s.name);
-                                            const isSelected = gameState.squadAnimal === s.name;
-                                            
-                                            let btnClass = "border border-cyber-green/30 p-4 flex flex-col items-center gap-2 transition-all duration-300 relative group ";
-                                            if (gameState.isSquadSelecting) {
-                                                if (isSelected) btnClass += "opacity-100 scale-105 border-cyber-blue bg-cyber-blue/20 shadow-[0_0_20px_#00f3ff] z-20";
-                                                else btnClass += "opacity-20 grayscale scale-95";
-                                            } else {
-                                                if (isTaken) btnClass += "opacity-20 grayscale cursor-not-allowed bg-gray-900";
-                                                else btnClass += "hover:border-cyber-blue hover:bg-cyber-blue/10 cursor-pointer bg-black/80";
-                                            }
+                        </div>
+                    )}
 
-                                            return (
-                                                <button key={s.name} 
-                                                    disabled={gameState.isSquadSelecting || isTaken} 
-                                                    onClick={() => {
-                                                        playSFX('click');
-                                                        setGameState(prev => ({...prev, isSquadSelecting: true, squadAnimal: s.name}));
-                                                        if(connRef.current) connRef.current.send({type:'REQ', name:s.name});
-                                                    }}
-                                                    className={btnClass}>
-                                                    <span className="text-4xl filter drop-shadow-[0_0_5px_rgba(0,255,65,0.5)]">{s.icon}</span>
-                                                    <span className={`font-bold uppercase text-xs md:text-sm tracking-wider ${isTaken && !isSelected ? 'line-through text-red-500' : 'text-cyber-green group-hover:text-cyber-blue'}`}>
-                                                        {s.name}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                    {gameState.stage === 'squad-selection' && (
+                        <div className="screen-center">
+                            <h2 className="text-cyber-blue" style={{fontSize:'2rem', marginBottom:'1.5rem'}}>SELECCIÓN DE AVATAR</h2>
+                            <div className="cyber-border" style={{width:'100%', maxWidth:'900px', maxHeight:'70vh', overflowY:'auto'}}>
+                                <div className="squad-grid">
+                                    {SQUADS.map(s => {
+                                        const taken = gameState.takenSquads.includes(s.name);
+                                        const selected = gameState.squadAnimal === s.name;
+                                        return (
+                                            <button 
+                                                key={s.name} 
+                                                disabled={taken || gameState.isSquadSelecting}
+                                                onClick={() => {
+                                                    playSFX('click');
+                                                    setGameState(p => ({...p, isSquadSelecting: true, squadAnimal: s.name}));
+                                                    connRef.current.send({type:'REQ', name: s.name});
+                                                }}
+                                                className={`squad-card ${selected ? 'selected' : ''}`}
+                                            >
+                                                <div className="squad-icon">{s.icon}</div>
+                                                <div className="squad-name">{s.name}</div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
-                                
-                                {gameState.isSquadSelecting && (
-                                    <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-2xl px-6">
-                                        <div className="bg-black/90 border-2 border-cyber-blue p-6 text-center shadow-[0_0_50px_rgba(0,243,255,0.3)] backdrop-blur-md animate-pulse">
-                                            <div className="text-cyber-blue text-2xl font-black uppercase font-mono tracking-widest mb-2">VERIFICANDO: {gameState.squadAnimal}</div>
-                                            <div className="w-full bg-gray-900 h-1 mt-2 overflow-hidden">
-                                                <div className="h-full bg-cyber-blue w-1/3 animate-[shimmer_1s_infinite_linear]"></div>
-                                            </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {gameState.stage === 'squad-lobby' && (
+                        <div className="screen-center">
+                            <div style={{fontSize:'6rem', animation:'pulse 1s infinite'}}>📡</div>
+                            <h2 className="text-cyber-green uppercase" style={{letterSpacing:'2px', marginTop:'1rem'}}>ESPERANDO SEÑAL...</h2>
+                        </div>
+                    )}
+
+                    {gameState.stage === 'squad-intro' && (
+                        <div className="screen-center">
+                            <div className="cyber-border" style={{maxWidth:'600px', padding:'2rem'}}>
+                                <Typewriter text={`>>> INICIANDO PROTOCOLO HYDRA.\n>>> AGENTE: ${gameState.squadAnimal}\n>>> MISIÓN: HACKEAR 5 SECTORES.\n>>> ESTADO: LISTO.`} className="text-cyber-green" style={{fontSize:'1.2rem', whiteSpace:'pre-wrap', lineHeight:'1.5', marginBottom:'2rem', display:'block'}} />
+                                <button onClick={() => setGameState(s => ({...s, stage: 'squad-game'}))} className="btn-cyber">INFILTRARSE</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {gameState.stage === 'squad-game' && (
+                        <div style={{padding:'1rem', minHeight:'100vh', display:'flex', flexDirection:'column', gap:'1rem'}}>
+                            <div className="cyber-border" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                <span className="text-cyber-green uppercase" style={{fontWeight:'bold', fontSize:'1.2rem'}}>AGENTE {gameState.squadAnimal}</span>
+                                <div style={{display:'flex', gap:'0.5rem'}}>
+                                    {[1,2,3,4,5].map(i => <div key={i} style={{width:'12px', height:'12px', borderRadius:'50%', background: gameState.sectors.find(s=>s.id===i)?.isSolved ? 'var(--c-green)' : '#333', boxShadow: gameState.sectors.find(s=>s.id===i)?.isSolved ? '0 0 10px var(--c-green)' : 'none'}}></div>)}
+                                </div>
+                            </div>
+
+                            <div style={{display:'flex', gap:'1rem', flexWrap:'wrap', flex:1}}>
+                                <div style={{flex:1, minWidth:'300px', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:'1rem'}}>
+                                    {gameState.sectors.map(s => (
+                                        <div key={s.id} onClick={() => !s.isSolved && setActiveSectorId(s.id)} className="cyber-border" style={{cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'120px', background: s.isSolved ? 'rgba(0,255,65,0.05)' : 'rgba(0,0,0,0.8)'}}>
+                                            <span className="text-cyber-blue" style={{fontSize:'0.8rem', marginBottom:'0.5rem'}}>SECTOR 0{s.id}</span>
+                                            <span style={{fontSize:'2.5rem', fontWeight:'900', color: s.isSolved ? 'var(--c-green)' : '#fff'}}>{s.isSolved ? s.accessCode : '??'}</span>
                                         </div>
+                                    ))}
+                                </div>
+
+                                <div className="cyber-border" style={{width:'100%', maxWidth:'300px', display:'flex', flexDirection:'column', gap:'1rem'}}>
+                                    <h3 className="text-cyber-blue text-center uppercase">BÓVEDA HYDRA</h3>
+                                    <div style={{display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:'5px'}}>
+                                        {vaultCodes.map((v, i) => <input key={i} maxLength={2} value={v} onChange={e=>{ const n=[...vaultCodes]; n[i]=e.target.value; setVaultCodes(n); }} className="vault-input" />)}
                                     </div>
-                                )}
+                                    <button onClick={() => {
+                                        if(gameState.sectors.every((s,i) => vaultCodes[i] === s.accessCode)) { playSFX('success'); connRef.current.send({type:'FIN', name: gameState.squadAnimal}); }
+                                        else { playSFX('error'); setLockout(5); }
+                                    }} className="btn-cyber" style={{marginTop:'auto'}}>ABRIR</button>
+                                </div>
                             </div>
-                        );
-                    case 'squad-lobby':
-                        return (
-                            <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-6 text-center">
-                                <div className="scan-animation"></div>
-                                <div className="text-[12rem] mb-12 animate-pulse">📡</div>
-                                <h2 className="text-5xl font-black text-cyber-green mb-6 uppercase max-w-4xl leading-tight">ESPERANDO SEÑAL DEL MANDO CENTRAL</h2>
-                                <p className="text-cyber-blue font-mono text-sm tracking-widest uppercase opacity-50">UNIDAD {gameState.squadAnimal?.toUpperCase()} EN LÍNEA</p>
+                            
+                            {/* MODAL PREGUNTAS */}
+                            {activeSectorId && (
+                                <SectorModal 
+                                    sector={gameState.sectors.find(s => s.id === activeSectorId)} 
+                                    playSFX={playSFX}
+                                    onClose={() => setActiveSectorId(null)}
+                                    onSolved={(id) => {
+                                        playSFX('success');
+                                        setGameState(s => ({...s, sectors: s.sectors.map(x => x.id===id ? {...x, isSolved:true} : x)}));
+                                        setActiveSectorId(null);
+                                    }}
+                                    onLock={() => { playSFX('error'); setLockout(5); setActiveSectorId(null); }}
+                                />
+                            )}
+                        </div>
+                    )}
+
+                    {gameState.stage === 'squad-win' && (
+                        <div className="screen-center">
+                            <h2 className="title-huge text-center" style={{fontSize:'4rem', lineHeight:'1'}}>MISIÓN<br/>CUMPLIDA</h2>
+                            <div style={{display:'flex', gap:'2rem', marginBottom:'2rem'}}>
+                                <div className="cyber-border text-center">
+                                    <div style={{fontSize:'0.8rem', color:'var(--c-blue)'}}>TIEMPO</div>
+                                    <div style={{fontSize:'3rem', fontFamily:'monospace'}}>{formatTime(gameState.finalTime)}</div>
+                                </div>
+                                <div className="cyber-border text-center">
+                                    <div style={{fontSize:'0.8rem', color:'var(--c-gold)'}}>RANKING</div>
+                                    <div style={{fontSize:'3rem', color:'var(--c-gold)', fontWeight:'900'}}>#{gameState.finalRank}</div>
+                                </div>
                             </div>
-                        );
-                    case 'squad-intro':
-                        return (
-                            <div className="cyber-border max-w-3xl p-16 bg-cyber-dark z-10">
-                                <Typewriter text={`>>> OBJETIVO: HACKEO RED HYDRA.\n>>> UNIDAD: ${gameState.squadAnimal?.toUpperCase()}\n>>> MISIÓN: DESBLOQUEAR 5 SECTORES.\n>>> CIFRADO DE SALIDA: REQUERIDO.\n\nSISTEMA LISTO.`} className="text-2xl text-cyber-green whitespace-pre-wrap mb-12 font-bold font-mono" />
-                                <button onClick={() => setGameState(s => ({...s, stage: 'squad-game'}))} className="px-16 py-6 bg-cyber-green text-black font-black uppercase text-2xl shadow-[0_0_20px_#00ff41]">INFILTRARSE</button>
+                            <button onClick={reset} className="btn-cyber btn-start" style={{width:'auto', padding:'1rem 3rem'}}>NUEVA MISIÓN</button>
+                        </div>
+                    )}
+
+                    {gameState.stage === 'admin-monitor' && (
+                        <div style={{padding:'2rem', minHeight:'100vh', display:'flex', flexDirection:'column'}}>
+                            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'2rem', borderBottom:'1px solid rgba(0,255,65,0.2)', paddingBottom:'1rem'}}>
+                                <h1 className="text-cyber-green" style={{fontSize:'2rem', margin:0}}>CONTROL HYDRA</h1>
+                                <button onClick={reset} style={{border:'1px solid var(--c-red)', background:'none', color:'var(--c-red)', padding:'0.5rem 1rem', cursor:'pointer'}}>TERMINAR</button>
                             </div>
-                        );
-                    case 'squad-game':
-                        const active = gameState.sectors.find(s => s.id === activeSectorId);
-                        return (
-                            <div className="min-h-screen w-full flex flex-col lg:flex-row gap-8 p-10 z-10 bg-matrix">
-                                <div className="flex-1 flex flex-col gap-8">
-                                    <header className="cyber-border bg-black p-6 flex justify-between items-center shadow-lg">
-                                        <h1 className="text-3xl font-black text-cyber-green font-mono uppercase">AGENTE_{gameState.squadAnimal?.toUpperCase()}</h1>
-                                        <div className="flex gap-4">
-                                            {[1,2,3,4,5].map(i => <div key={i} className={`w-3 h-3 rounded-full ${gameState.sectors.find(s=>s.id===i)?.isSolved ? 'led-green' : 'bg-gray-800 animate-pulse'}`}></div>)}
+                            <div style={{flex:1, display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:'2rem'}}>
+                                <div className="cyber-border" style={{overflowY:'auto'}}>
+                                    <h3 className="text-cyber-gold" style={{fontSize:'1.5rem', marginBottom:'1rem'}}>RANKING</h3>
+                                    {gameState.finishedSquads.map((s,i) => (
+                                        <div key={i} style={{display:'flex', justifyContent:'space-between', padding:'1rem', background:'rgba(255, 215, 0, 0.1)', borderLeft:'4px solid var(--c-gold)', marginBottom:'0.5rem'}}>
+                                            <span style={{fontWeight:'bold'}}>#{i+1} {s.name}</span>
+                                            <span style={{fontFamily:'monospace'}}>{formatTime(s.time)}</span>
                                         </div>
-                                    </header>
-                                    <div className="grid md:grid-cols-3 gap-6 flex-1">
-                                        {gameState.sectors.map(s => (
-                                            <div key={s.id} onClick={() => !s.isSolved && setActiveSectorId(s.id)} className={`cyber-border p-8 cursor-pointer transition-all ${s.isSolved ? 'bg-cyber-green/10 border-cyber-green' : 'hover:border-cyber-blue hover:bg-cyber-blue/5'}`}>
-                                                <div className="text-[10px] text-cyber-blue mb-4 font-bold uppercase">Sector_{s.id.toString().padStart(2,'0')}</div>
-                                                <div className="text-7xl text-center font-black font-mono">{s.isSolved ? s.accessCode : '??'}</div>
+                                    ))}
+                                </div>
+                                <div className="cyber-border">
+                                    <h3 className="text-cyber-blue" style={{fontSize:'1.5rem', marginBottom:'1rem'}}>EN PROGRESO</h3>
+                                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem'}}>
+                                        {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f=>f.name===s)).map(s => (
+                                            <div key={s} style={{padding:'0.5rem', border:'1px solid var(--c-blue)', background:'rgba(0, 243, 255, 0.05)', display:'flex', justifyContent:'space-between'}}>
+                                                <span>{s}</span><span style={{animation:'pulse 1s infinite'}}>...</span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="lg:w-96 flex">
-                                    <div className="cyber-border p-8 bg-black flex-1 flex flex-col shadow-2xl">
-                                        <h2 className="text-xl text-cyber-blue font-black mb-10 border-b border-cyber-blue/20 pb-4 text-center uppercase tracking-widest">Bóveda Hydra</h2>
-                                        {/* Ajuste de inputs */}
-                                        <div className="grid grid-cols-5 gap-2 mb-10">
-                                            {vaultCodes.map((v, i) => (
-                                                <input key={i} maxLength={2} value={v} onChange={e => {
-                                                    const n = [...vaultCodes]; n[i] = e.target.value; setVaultCodes(n);
-                                                }} className="vault-input font-mono font-black rounded-sm" placeholder="--" />
-                                            ))}
-                                        </div>
-                                        <button onClick={() => {
-                                            if(gameState.sectors.every((s, i) => vaultCodes[i] === s.accessCode)) {
-                                                playSFX('success');
-                                                if(connRef.current) connRef.current.send({type:'FIN', name:gameState.squadAnimal});
-                                                setGameState(s => ({...s, isLoadingRank: true}));
-                                            } else {
-                                                playSFX('error'); setLockout(10);
-                                            }
-                                        }} disabled={gameState.isLoadingRank} className="w-full bg-cyber-blue text-black font-black py-6 text-2xl uppercase shadow-[0_0_30px_#00f3ff] hover:bg-white transition-all disabled:opacity-50">
-                                            {gameState.isLoadingRank ? 'SUBIENDO DATOS...' : 'CONFIRMAR'}
-                                        </button>
-                                    </div>
-                                </div>
-                                {active && (
-                                    <SectorModal 
-                                        sector={active} 
-                                        playSFX={playSFX}
-                                        onSolved={(id) => {
-                                            playSFX('success');
-                                            setGameState(s => ({...s, sectors: s.sectors.map(sec => sec.id === id ? {...sec, isSolved: true} : sec)}));
-                                            setActiveSectorId(null);
-                                        }}
-                                        onLocked={() => { playSFX('error'); setActiveSectorId(null); setLockout(10); }}
-                                    />
-                                )}
-                            </div>
-                        );
-                    case 'squad-win':
-                        return (
-                            <div className="text-center z-10 px-6 w-full max-w-4xl">
-                                <h2 className="text-6xl md:text-8xl font-black text-cyber-green mb-8 animate-glitch uppercase font-mono tracking-tighter">MISIÓN CUMPLIDA</h2>
-                                
-                                <div className="grid md:grid-cols-2 gap-8 mb-12">
-                                    <div className="cyber-border p-10 bg-black/50 flex flex-col items-center justify-center">
-                                        <div className="text-cyber-blue text-sm uppercase tracking-widest mb-2">TIEMPO TOTAL</div>
-                                        <div className="text-6xl font-black text-white font-mono">{formatTime(gameState.finalTime)}</div>
-                                    </div>
-                                    <div className="cyber-border p-10 bg-black/50 flex flex-col items-center justify-center relative overflow-hidden">
-                                        <div className="absolute inset-0 bg-cyber-gold/10 animate-pulse"></div>
-                                        <div className="text-cyber-gold text-sm uppercase tracking-widest mb-2 relative z-10">CLASIFICACIÓN</div>
-                                        <div className="text-6xl font-black text-cyber-gold font-mono relative z-10">
-                                            #{gameState.finalRank}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button onClick={resetGame} className="px-16 py-6 border-4 border-cyber-green text-cyber-green font-black text-3xl uppercase hover:bg-cyber-green hover:text-black transition-all shadow-[0_0_30px_rgba(0,255,65,0.3)]">NUEVA INFILTRACIÓN</button>
-                            </div>
-                        );
-                    case 'admin-monitor':
-                        return (
-                            <div className="w-full h-screen p-10 z-10 flex flex-col bg-cyber-dark bg-matrix">
-                                <header className="flex justify-between items-center border-b border-cyber-green/20 pb-8 mb-16">
-                                    <h1 className="text-5xl font-black text-cyber-green font-mono uppercase tracking-tighter">CENTRO DE CONTROL HYDRA</h1>
-                                    <button onClick={resetGame} className="px-10 py-4 border border-cyber-red text-cyber-red font-black uppercase hover:bg-cyber-red hover:text-white transition-all">TERMINAR SESIÓN</button>
-                                </header>
-                                <div className="grid md:grid-cols-2 gap-12 flex-1 overflow-hidden">
-                                    <div className="cyber-border p-8 bg-black/50 overflow-y-auto relative custom-scrollbar">
-                                        <div className="absolute top-0 right-0 p-2 text-[10px] text-cyber-gold font-mono">LIVE FEED</div>
-                                        <h2 className="text-cyber-gold text-2xl mb-10 font-black uppercase border-b border-cyber-gold/20 pb-4 tracking-widest">RANKING EN TIEMPO REAL</h2>
-                                        <div className="space-y-4">
-                                            {gameState.finishedSquads.map((s, i) => (
-                                                <div key={i} className="flex items-center justify-between p-6 border-l-4 border-cyber-gold bg-cyber-gold/5 text-4xl font-black uppercase">
-                                                    <div className="flex items-center gap-6">
-                                                        <span className="text-cyber-gold/50">#{i + 1}</span>
-                                                        <span>{s.name}</span>
-                                                    </div>
-                                                    <span className="text-white font-mono text-3xl">{formatTime(s.time)}</span>
-                                                </div>
-                                            ))}
-                                            {gameState.finishedSquads.length === 0 && <p className="text-gray-700 text-center py-20 animate-pulse uppercase tracking-[0.3em] font-mono">Esperando confirmaciones de extracción...</p>}
-                                        </div>
-                                    </div>
-                                    <div className="cyber-border p-8 bg-black/50 custom-scrollbar overflow-y-auto">
-                                        <h2 className="text-cyber-blue text-2xl mb-10 font-black uppercase border-b border-cyber-blue/20 pb-4 tracking-widest">ESTADO DE UNIDADES</h2>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f => f.name === s)).map(s => (
-                                                <div key={s} className="p-4 text-xl font-black bg-cyber-blue/10 border-l-[6px] border-cyber-blue uppercase font-mono flex justify-between items-center">
-                                                    <span>{s}</span>
-                                                    <span className="text-[10px] text-cyber-blue animate-pulse">RUNNING</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="absolute bottom-4 left-4 text-[10px] font-mono text-gray-600">AUDIO SOURCE: {audioSource}</div>
-                            </div>
-                        );
-                    default: return <div className="text-4xl text-cyber-green">RELOADING...</div>;
-                }
-            };
-
-            return (
-                <div className="min-h-screen flex items-center justify-center relative bg-matrix overflow-hidden">
-                    {/* Botón de Ayuda (Solo en pantalla principal) */}
-                    {gameState.stage === 'selection' && (
-                        <button 
-                            onClick={() => setShowHelp(true)} 
-                            className="fixed top-8 left-8 z-[3000] w-12 h-12 border-2 border-cyber-blue text-cyber-blue flex items-center justify-center rounded-full font-bold text-xl hover:bg-cyber-blue hover:text-black transition-all shadow-[0_0_15px_#00f3ff]"
-                            aria-label="Ayuda"
-                        >
-                            ?
-                        </button>
-                    )}
-
-                    {/* Modal de Ayuda */}
-                    {showHelp && (
-                        <div className="fixed inset-0 z-[4000] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm">
-                            <div className="cyber-border w-full max-w-2xl p-8 bg-black relative shadow-[0_0_50px_rgba(0,243,255,0.2)]">
-                                <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 text-cyber-red hover:text-white font-black text-xl">X</button>
-                                <h2 className="text-3xl text-cyber-blue mb-6 font-black uppercase font-mono border-b border-cyber-blue/30 pb-2">Protocolo de Misión</h2>
-                                <div className="space-y-4 text-white font-mono leading-relaxed opacity-90">
-                                    <p><strong className="text-cyber-green">1. INICIAR:</strong> Ingresa el ID proporcionado por el Admin.</p>
-                                    <p><strong className="text-cyber-green">2. IDENTIDAD:</strong> Selecciona un avatar disponible. ¡Sé rápido, son únicos!</p>
-                                    <p><strong className="text-cyber-green">3. HACKEO:</strong> Responde preguntas para desbloquear los 5 SECTORES.</p>
-                                    <p><strong className="text-cyber-green">4. CÓDIGOS:</strong> Cada sector te dará un número de 2 dígitos.</p>
-                                    <p><strong className="text-cyber-green">5. EXTRACCIÓN:</strong> Introduce los códigos en la Bóveda Hydra para escapar.</p>
-                                    <p className="text-xs text-cyber-gold mt-6 border-t border-gray-800 pt-4">ADVERTENCIA: Si cierras el navegador, perderás la conexión neuronal.</p>
-                                </div>
                             </div>
                         </div>
                     )}
-
-                    {showAudioControls && (
-                        <div className="fixed top-8 right-8 z-[3000] flex flex-col items-end gap-3 group">
-                            <div className="bg-black/90 border border-cyber-green p-5 rounded opacity-0 group-hover:opacity-100 transition-all shadow-xl">
-                                <input type="range" min="0" max="1" step="0.01" value={volume} onChange={e => setVolume(parseFloat(e.target.value))} className="w-32 cursor-pointer" />
-                            </div>
-                            <button onClick={() => {
-                                getAudioContext(); // Ensure context is live
-                                if (!audioRef.current && !usingDroneRef.current) initMusic();
-                                setIsMuted(!isMuted);
-                            }} className={`w-14 h-14 border-2 flex items-center justify-center text-2xl transition-all ${isMuted ? 'border-cyber-red text-cyber-red' : 'border-cyber-green text-cyber-green shadow-[0_0_15px_#00ff41]'}`}>
-                                {isMuted ? '🔇' : '🔊'}
-                            </button>
-                        </div>
-                    )}
-                    {renderContent()}
                 </div>
             );
         }
 
-        const SectorModal = ({ sector, onSolved, onLocked, playSFX }) => {
-            const [qIndex, setQIndex] = useState(0);
-            const [selected, setSelected] = useState(null);
-            const [feedback, setFeedback] = useState('neutral');
-            const [shuffledOptions, setShuffledOptions] = useState([]);
-            
-            const currentQ = sector.questions[qIndex];
+        const SectorModal = ({ sector, playSFX, onSolved, onLock }) => {
+            const [idx, setIdx] = useState(0);
+            const [sel, setSel] = useState(null);
+            const [shuffled, setShuffled] = useState([]);
+            const q = sector.questions[idx];
 
-            // Mezclar opciones al cargar pregunta
             useEffect(() => {
-                if (currentQ) {
-                    const options = [...currentQ.options];
-                    for (let i = options.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [options[i], options[j]] = [options[j], options[i]];
-                    }
-                    setShuffledOptions(options);
+                if(q) {
+                    const ops = [...q.options];
+                    for(let i=ops.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [ops[i], ops[j]] = [ops[j], ops[i]]; }
+                    setShuffled(ops);
                 }
-            }, [currentQ]);
+            }, [q]);
 
-            const handleSelect = (idx) => {
-                if (selected !== null) return;
-                setSelected(idx);
-
-                // Validamos comparando el texto de la opción seleccionada con la respuesta correcta original
-                const selectedText = shuffledOptions[idx];
-                const correctText = currentQ.options[currentQ.correctIndex];
-
-                if (selectedText === correctText) {
-                    playSFX('success'); setFeedback('correct');
+            const check = (i) => {
+                if(sel !== null) return;
+                setSel(i);
+                const isCorrect = shuffled[i] === q.options[q.correctIndex];
+                if(isCorrect) {
+                    playSFX('success');
                     setTimeout(() => {
-                        if (qIndex + 1 < sector.questions.length) { setQIndex(p => p+1); setSelected(null); setFeedback('neutral'); }
+                        if(idx+1 < sector.questions.length) { setIdx(idx+1); setSel(null); }
                         else onSolved(sector.id);
                     }, 800);
                 } else {
-                    playSFX('error'); setFeedback('wrong');
-                    setTimeout(() => onLocked(), 1000);
+                    playSFX('error');
+                    setTimeout(onLock, 800);
                 }
             };
 
-            if (!currentQ) return null;
             return (
-                <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/95 p-4 backdrop-blur-sm">
-                    <div className="cyber-border w-full max-w-3xl p-10 bg-cyber-dark shadow-[0_0_100px_rgba(0,255,65,0.2)]">
-                        <div className="mb-8 w-full">
-                            <div className="flex justify-between items-end mb-2">
-                                <h3 className="text-3xl text-cyber-green font-black uppercase font-mono tracking-widest leading-none">SECTOR_0{sector.id}</h3>
-                                <span className="text-cyber-green/60 font-mono text-xs tracking-widest">SECUENCIA_DE_NODO</span>
-                            </div>
-                            
-                            {/* Barra de Progreso Gráfica */}
-                            <div className="flex gap-1 w-full h-3">
-                                {sector.questions.map((_, i) => {
-                                    const status = i < qIndex ? 'done' : (i === qIndex ? 'active' : 'pending');
-                                    return (
-                                        <div key={i} className={`flex-1 relative transition-all duration-300 transform skew-x-[-20deg] border
-                                            ${status === 'done' ? 'bg-cyber-green border-cyber-green shadow-[0_0_8px_#00ff41]' : ''}
-                                            ${status === 'active' ? 'bg-cyber-blue/20 border-cyber-blue shadow-[0_0_10px_#00f3ff] animate-pulse' : ''}
-                                            ${status === 'pending' ? 'bg-transparent border-gray-800 opacity-30' : ''}
-                                        `}>
-                                            {/* Indicador de posición actual */}
-                                            {status === 'active' && (
-                                                 <div className="absolute -top-5 left-0 w-full text-center text-[10px] text-cyber-blue font-bold tracking-wider skew-x-[20deg]">
-                                                    {i + 1}/{sector.questions.length}
-                                                 </div>
-                                            )}
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                            <div className="h-px w-full bg-gradient-to-r from-cyber-green/0 via-cyber-green/50 to-cyber-green/0 mt-4"></div>
+                <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.95)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                    <div className="cyber-border" style={{width:'100%', maxWidth:'700px', padding:'2rem', margin:'1rem'}}>
+                        <div style={{display:'flex', justifyContent:'space-between', marginBottom:'1.5rem', borderBottom:'1px solid rgba(0,255,65,0.3)', paddingBottom:'0.5rem'}}>
+                            <span className="text-cyber-green" style={{fontSize:'1.5rem', fontWeight:'900'}}>SECTOR 0{sector.id}</span>
+                            <span className="text-cyber-blue">{idx+1}/{sector.questions.length}</span>
                         </div>
-
-                        {currentQ.imageUrl && <img src={currentQ.imageUrl} className="w-full h-56 object-cover mb-8 border border-cyber-green/30 grayscale contrast-125 shadow-lg" />}
-                        <p className="text-3xl text-white mb-12 leading-relaxed font-black font-mono">{currentQ.question}</p>
-                        <div className="grid gap-5">
-                            {shuffledOptions.map((opt, i) => (
-                                <button key={i} onClick={() => handleSelect(i)} disabled={selected !== null} className={`p-6 text-left border-2 transition-all font-black text-xl font-mono ${selected === i ? (feedback === 'correct' ? 'bg-cyber-green text-black border-white' : 'bg-cyber-red text-white border-white animate-shake') : (selected !== null ? 'opacity-30' : 'border-cyber-green/20 text-cyber-green hover:border-cyber-green hover:bg-cyber-green/10 hover:translate-x-2')}`}>{opt}</button>
+                        {q.imageUrl && <img src={q.imageUrl} style={{width:'100%', height:'200px', objectFit:'cover', marginBottom:'1.5rem', border:'1px solid #333', filter:'grayscale(1)'}} />}
+                        <p style={{fontSize:'1.2rem', marginBottom:'2rem', lineHeight:'1.4'}}>{q.question}</p>
+                        <div style={{display:'grid', gap:'1rem'}}>
+                            {shuffled.map((op, i) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => check(i)}
+                                    disabled={sel !== null}
+                                    style={{
+                                        padding:'1rem', textAlign:'left', fontSize:'1.1rem', cursor:'pointer',
+                                        background: sel === i ? (shuffled[i] === q.options[q.correctIndex] ? 'var(--c-green)' : 'var(--c-red)') : 'transparent',
+                                        color: sel === i ? '#000' : 'var(--c-green)',
+                                        border: `1px solid ${sel === i ? 'transparent' : 'rgba(0,255,65,0.3)'}`,
+                                        fontWeight: 'bold'
+                                    }}
+                                >
+                                    {op}
+                                </button>
                             ))}
                         </div>
                     </div>
