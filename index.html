@@ -3,260 +3,197 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scape Room - Protocolo Cyberpunk (OFFLINE)</title>
-    <!-- Icono en Base64 para que cargue siempre -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐺</text></svg>">
+    <title>Scape Room - Protocolo Hydra v5.6</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     
-    <!-- 
-        === IMPORTANTE: CARPETA JS ===
-        Asegúrate de tener la carpeta "js" al lado de este archivo con:
-        - react.js
-        - react-dom.js
-        - babel.js
-        - peerjs.js
-    -->
     <script src="./js/react.js"></script>
     <script src="./js/react-dom.js"></script>
     <script src="./js/babel.js"></script>
     <script src="./js/peerjs.js"></script>
     
-    <!-- Intenta cargar la fuente online, pero tenemos un fallback robusto en CSS -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
     <style>
-        /* --- CORE VARIABLES --- */
         :root {
-            --c-black: #050505;
+            --c-black: #020202;
             --c-green: #00ff41;
-            --c-green-dim: rgba(0, 255, 65, 0.1);
+            --c-green-glow: rgba(0, 255, 65, 0.4);
             --c-blue: #00f3ff;
-            --c-blue-dim: rgba(0, 243, 255, 0.1);
+            --c-blue-glow: rgba(0, 243, 255, 0.4);
             --c-red: #ff003c;
             --c-gold: #ffd700;
-            
-            /* Fuente Híbrida: Intenta cargar la bonita, si no, usa las del sistema estilo consola */
-            --font-main: 'Share Tech Mono', 'Courier New', Courier, 'Lucida Console', Monaco, monospace;
+            --font-main: 'Share Tech Mono', 'Courier New', monospace;
         }
 
-        /* --- RESET & BASE --- */
         * { box-sizing: border-box; }
-        
         body { 
             background-color: var(--c-black); 
             color: var(--c-green); 
             font-family: var(--font-main); 
-            margin: 0; 
-            padding: 0;
-            overflow-x: hidden;
-            min-height: 100vh;
-            /* Efecto CRT Scanlines sutil en el fondo */
-            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            margin: 0; padding: 0;
+            overflow: hidden; height: 100vh;
         }
 
-        /* Efecto Matrix de fondo */
-        .bg-matrix {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-            background-image: 
-                linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
-            pointer-events: none;
+        /* --- BACKGROUND & FX --- */
+        .bg-layer { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%); }
+        .circuit-bg {
+            position: fixed; inset: 0; z-index: -1; opacity: 0.05; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Cpath d='M0 100h100v100h100v100h100v100M100 0v100h100v100h100v100h100' fill='none' stroke='%2300ff41' stroke-width='1'/%3E%3C/svg%3E");
+            animation: moveBg 120s linear infinite;
+        }
+        @keyframes moveBg { from { background-position: 0 0; } to { background-position: 400px 400px; } }
+        .crt-scan {
+            position: fixed; inset: 0; z-index: 1001; pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 3px, 3px 100%;
         }
 
-        /* --- UTILITIES --- */
-        .hidden { display: none; }
-        .uppercase { text-transform: uppercase; }
-        .font-black { font-weight: 900; }
-        .relative { position: relative; }
-        .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .items-center { align-items: center; }
-        .justify-center { justify-content: center; }
-        .justify-between { justify-content: space-between; }
-        .w-full { width: 100%; }
-        .text-center { text-align: center; }
-
-        /* --- TYPOGRAPHY & GLOWS --- */
-        .text-cyber-green { color: var(--c-green); text-shadow: 0 0 5px var(--c-green-dim); }
-        .text-cyber-blue { color: var(--c-blue); text-shadow: 0 0 5px var(--c-blue-dim); }
-        .text-cyber-red { color: var(--c-red); text-shadow: 0 0 5px rgba(255, 0, 60, 0.3); }
-        .text-cyber-gold { color: var(--c-gold); text-shadow: 0 0 5px rgba(255, 215, 0, 0.3); }
+        /* --- UI COMPONENTS --- */
+        .cyber-border {
+            position: relative; border: 1px solid var(--c-green);
+            background: rgba(0, 0, 0, 0.9); box-shadow: 0 0 20px var(--c-green-glow);
+            padding: 2rem; border-radius: 4px;
+        }
+        .cyber-border::before {
+            content: attr(data-label); position: absolute; top: -10px; left: 15px;
+            font-size: 10px; background: var(--c-black); padding: 0 8px; color: var(--c-green); letter-spacing: 2px;
+        }
 
         .title-huge {
-            font-size: clamp(3rem, 10vw, 6rem);
-            line-height: 1;
-            font-weight: 900;
-            color: var(--c-green);
-            text-transform: uppercase;
-            text-shadow: 0 0 10px var(--c-green), 0 0 20px var(--c-green-dim);
-            margin-bottom: 2rem;
-            letter-spacing: -2px;
-            animation: glitch 3s infinite alternate;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900; color: var(--c-green);
+            text-shadow: 0 0 15px var(--c-green);
+            text-transform: uppercase; margin-bottom: 2rem; text-align: center;
         }
 
-        /* --- COMPONENTS --- */
-        
-        /* Contenedores con borde neón */
-        .cyber-border {
-            position: relative; 
-            border: 1px solid var(--c-green);
-            background: rgba(0, 0, 0, 0.85);
-            box-shadow: 0 0 15px var(--c-green-dim), inset 0 0 20px rgba(0,0,0,0.8);
-            padding: 1.5rem;
-            backdrop-filter: blur(2px);
-        }
-        /* Esquinas decorativas */
-        .cyber-border::before, .cyber-border::after {
-            content: ''; position: absolute; width: 8px; height: 8px;
-            background: var(--c-green); transition: 0.3s;
-        }
-        .cyber-border::before { top: -1px; left: -1px; box-shadow: 2px 2px 5px var(--c-green); }
-        .cyber-border::after { bottom: -1px; right: -1px; box-shadow: -2px -2px 5px var(--c-green); }
-
-        /* Botones */
         .btn-cyber {
-            background: var(--c-blue); 
-            color: #000;
-            font-family: var(--font-main); 
-            font-weight: 800; 
-            font-size: 1.2rem;
-            text-transform: uppercase; 
-            padding: 1rem 2rem; 
-            width: 100%;
-            border: 2px solid var(--c-blue); 
-            cursor: pointer; 
-            transition: all 0.2s;
-            text-shadow: none;
-            clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
-            margin-top: 1rem;
-            letter-spacing: 1px;
+            background: var(--c-blue); color: #000;
+            padding: 1rem 1.5rem; font-family: var(--font-main); font-weight: 900;
+            text-transform: uppercase; border: none; cursor: pointer;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: 0.2s; font-size: 1rem;
         }
-        .btn-cyber:hover { 
-            background: #fff; 
-            box-shadow: 0 0 25px var(--c-blue); 
-            transform: translateY(-2px);
-        }
-        .btn-cyber:disabled {
-            background: #333;
-            border-color: #555;
-            color: #777;
-            box-shadow: none;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .btn-start {
-            background: var(--c-green);
-            border-color: var(--c-green);
-            box-shadow: 0 0 15px var(--c-green-dim);
-        }
+        .btn-cyber:hover:not(:disabled) { transform: scale(1.03); background: #fff; box-shadow: 0 0 25px var(--c-blue); }
+        .btn-cyber:disabled { background: #333; color: #666; cursor: not-allowed; opacity: 0.5; }
 
-        /* Inputs */
+        .btn-outline { background: transparent; border: 1px solid var(--c-blue); color: var(--c-blue); box-shadow: none; }
+        .btn-outline:hover { background: rgba(0, 243, 255, 0.1); color: var(--c-blue); }
+
         .input-cyber {
-            width: 100%; 
-            background: #000; 
-            border: 2px solid var(--c-green);
-            padding: 1rem; 
-            font-family: var(--font-main); 
-            font-size: 1.5rem;
-            color: var(--c-green); 
-            text-align: center; 
-            outline: none;
-            box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.1);
-            transition: 0.3s;
-            text-transform: uppercase;
-        }
-        .input-cyber:focus { 
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3), inset 0 0 10px rgba(0, 255, 65, 0.2); 
-            border-color: #fff;
+            width: 100%; background: #000; border: 2px solid var(--c-blue);
+            padding: 1rem; color: #fff; font-family: var(--font-main); font-size: 1.5rem;
+            text-align: center; outline: none; margin-bottom: 1rem;
         }
 
-        /* Squad Cards */
-        .squad-grid {
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); 
-            gap: 0.8rem;
-            padding: 0.5rem;
+        /* --- AUDIO PLAYER (ADMIN ONLY) --- */
+        .audio-player-admin {
+            position: fixed; top: 1rem; right: 1rem; z-index: 5000;
+            background: rgba(0,0,0,0.95); border: 1px solid var(--c-blue);
+            padding: 8px 15px; border-radius: 4px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 0 15px var(--c-blue-glow);
         }
-        @media(min-width: 768px) { .squad-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); } }
+        .audio-ctrl-btn {
+            background: none; border: none; color: var(--c-blue); 
+            cursor: pointer; font-size: 1.4rem; font-family: var(--font-main);
+            transition: 0.2s; padding: 0 5px;
+        }
+        .audio-ctrl-btn:hover { color: #fff; text-shadow: 0 0 10px var(--c-blue); transform: scale(1.1); }
+        .volume-slider { cursor: pointer; accent-color: var(--c-blue); width: 80px; }
 
+        /* --- SQUAD SELECTION MATRIX 6x5 --- */
+        .squad-grid-6x5 {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 0.5rem; padding: 1rem;
+            max-width: 850px; margin: 0 auto;
+        }
         .squad-card {
-            border: 1px solid rgba(0, 255, 65, 0.3);
-            background: rgba(0,0,0,0.6);
-            padding: 0.8rem; 
-            cursor: pointer; 
-            transition: 0.2s;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .squad-card:hover:not(:disabled) { 
-            border-color: var(--c-blue); 
-            background: rgba(0, 243, 255, 0.1); 
-            transform: scale(1.05);
-        }
-        .squad-card.selected { 
-            border-color: var(--c-blue); 
-            background: rgba(0, 243, 255, 0.25); 
-            box-shadow: 0 0 15px var(--c-blue-dim); 
-            transform: scale(1.1); 
-            z-index: 10; 
-        }
-        .squad-card:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
-        .squad-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-        .squad-name { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; color: var(--c-green); }
-
-        /* Pantalla central */
-        .screen-center {
-            min-height: 100vh; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center; 
-            padding: 1rem;
-            position: relative; 
-            z-index: 10;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: var(--c-green); border: 1px solid #000; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--c-blue); }
-
-        /* Animaciones */
-        @keyframes glitch {
-            0% { text-shadow: 2px 0 var(--c-red), -2px 0 var(--c-blue); }
-            90% { text-shadow: 2px 0 var(--c-red), -2px 0 var(--c-blue); }
-            91% { text-shadow: -2px 0 var(--c-red), 2px 0 var(--c-blue); transform: skew(10deg); }
-            92% { text-shadow: 0 0 0; transform: skew(0); }
-            100% { text-shadow: 2px 0 var(--c-red), -2px 0 var(--c-blue); }
-        }
-        .animate-pulse { animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        /* Vault Inputs */
-        .vault-input {
-            background: #000; border: 2px solid var(--c-blue); color: var(--c-blue);
-            width: 100%; height: 3.5rem; font-size: 1.5rem; text-align: center;
-            font-family: var(--font-main); font-weight: 900;
-            text-shadow: 0 0 5px var(--c-blue);
-        }
-
-        /* Botón Ayuda Flotante */
-        .btn-help {
-            position: fixed; top: 1.5rem; left: 1.5rem; width: 3.5rem; height: 3.5rem;
-            border: 2px solid var(--c-blue); color: var(--c-blue);
-            border-radius: 50%; font-size: 1.8rem; font-weight: bold;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.5); cursor: pointer; z-index: 3000;
-            transition: 0.3s; box-shadow: 0 0 10px var(--c-blue-dim);
-        }
-        .btn-help:hover { background: var(--c-blue); color: #000; box-shadow: 0 0 20px var(--c-blue); }
-
-        /* Preloader */
-        #preloader {
-            position: fixed; inset: 0; background: #000; z-index: 9999;
+            background: rgba(0,0,0,0.8); border: 1px solid rgba(0, 255, 65, 0.2);
+            padding: 0.5rem; cursor: pointer; text-align: center; transition: 0.3s;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--c-red); font-family: monospace; text-align: center;
+            min-height: 85px; position: relative;
+        }
+        .squad-card:hover:not(:disabled) { border-color: var(--c-blue); transform: translateY(-3px); background: rgba(0, 243, 255, 0.05); }
+        .squad-card.selected { border-color: var(--c-blue); box-shadow: 0 0 15px var(--c-blue); background: rgba(0, 243, 255, 0.1); }
+        .squad-card:disabled { 
+            opacity: 0.1; 
+            cursor: not-allowed !important; 
+            filter: grayscale(1) brightness(0.3); 
+            border-color: #111;
+            background: #050505;
+        }
+        .squad-card:disabled::after {
+            content: "BLOCKED"; position: absolute; bottom: 5px; font-size: 7px; color: var(--c-red); letter-spacing: 1px;
+        }
+        .squad-icon { font-size: 2rem; display: block; }
+        .squad-name { font-size: 0.55rem; font-weight: bold; letter-spacing: 1px; color: var(--c-green); text-transform: uppercase; margin-top: 4px; }
+
+        /* --- GAME LAYOUT --- */
+        .game-layout { display: flex; height: 100vh; width: 100vw; }
+        .main-panel { flex: 1; display: flex; flex-direction: column; padding: 1.5rem; gap: 1rem; overflow-y: auto; }
+        .vault-panel { width: 340px; border-left: 1px solid var(--c-blue); background: #000; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+
+        .sector-vertical-list { display: flex; flex-direction: column; gap: 1rem; }
+        .sector-row {
+            background: #050505; border: 1px solid var(--c-blue); padding: 1.25rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+            transition: 0.3s;
+        }
+        .sector-row.solved { border-color: var(--c-green); background: rgba(0, 255, 65, 0.1); cursor: default; }
+        .sector-label { font-weight: 900; font-size: 1.2rem; color: var(--c-blue); }
+        .sector-status { font-size: 0.7rem; color: #666; letter-spacing: 2px; margin-top: 4px; }
+        .sector-code { font-size: 2.5rem; font-weight: 900; color: var(--c-gold); text-shadow: 0 0 10px var(--gold); }
+
+        /* --- DETAILED QUESTION MODAL --- */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.95);
+            display: flex; align-items: center; justify-content: center; padding: 2rem;
+            backdrop-filter: blur(8px);
+        }
+        .detailed-modal {
+            width: 100%; max-width: 750px; background: #050505; border: 1px solid var(--c-blue);
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.2); border-radius: 4px; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        .modal-header-bar {
+            background: var(--c-blue); color: #000; padding: 0.5rem 1rem; display: flex;
+            justify-content: space-between; font-weight: 900; font-size: 0.75rem; letter-spacing: 2px;
+        }
+        .modal-body { padding: 2rem; position: relative; }
+        .question-text { font-size: 1.3rem; line-height: 1.5; color: #fff; margin-bottom: 2rem; border-left: 4px solid var(--c-blue); padding-left: 1.5rem; }
+        
+        /* SINGLE COLUMN ANSWERS */
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+        
+        .option-btn {
+            background: rgba(0, 243, 255, 0.03); border: 1px solid rgba(0, 243, 255, 0.2);
+            padding: 1.1rem 1.5rem; text-align: left; color: var(--c-blue); font-family: var(--font-main);
+            font-size: 0.95rem; cursor: pointer; transition: 0.2s; position: relative;
+            overflow: hidden;
+            text-transform: none; /* NO forced uppercase */
+        }
+        .option-btn:hover:not(:disabled) { background: rgba(0, 243, 255, 0.1); border-color: var(--c-blue); color: #fff; }
+        .option-btn.correct { background: var(--c-green); color: #000; border-color: var(--c-green); font-weight: 900; }
+        .option-btn.wrong { background: var(--c-red); color: #fff; border-color: var(--c-red); }
+        
+        .modal-footer-stats {
+            margin-top: 1.5rem; padding: 1rem; border-top: 1px solid #1a1a1a;
+            display: flex; justify-content: space-between; font-size: 0.7rem; color: #444;
+        }
+
+        /* --- VAULT --- */
+        .vault-input {
+            background: #111; border: 1px solid var(--c-blue); color: var(--c-blue);
+            width: 100%; height: 60px; font-size: 2rem; text-align: center; font-weight: 900;
+        }
+
+        .screen { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+        .pulse { animation: pulseAnim 2s infinite; }
+        @keyframes pulseAnim { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .rules-modal-content {
+            max-width: 600px; width: 100%;
         }
     </style>
 
@@ -271,311 +208,260 @@
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
-    <!-- Capas de fondo -->
-    <div class="bg-matrix"></div>
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%; z-index:999;"></div>
-
-    <!-- Preloader por si falla JS -->
-    <div id="preloader">
-        <h1 style="font-size:2rem; margin-bottom:1rem;">CARGANDO SISTEMA...</h1>
-        <p style="color:#666;">Si esto no desaparece, verifica que la carpeta <br> <b>/js</b> existe y contiene los 4 archivos.</p>
-    </div>
-
+    <div class="bg-layer"></div>
+    <div class="circuit-bg"></div>
     <div id="root"></div>
 
     <script type="text/babel">
-        // Ocultar preloader cuando React inicia
-        document.getElementById('preloader').style.display = 'none';
-
         const { useState, useEffect, useRef } = React;
 
-        // --- AUDIO SYSTEM ---
-        const POTENTIAL_TRACKS = ["./audio/background.mp3", "./audio/music.mp3", "./audio/cyber.mp3", "./audio/track1.mp3", "./audio/track2.mp3"];
-        let globalAudioCtx = null;
-        let droneNodes = null;
-
-        const getAudioContext = () => {
-            if (!globalAudioCtx) globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (globalAudioCtx.state === 'suspended') globalAudioCtx.resume();
-            return globalAudioCtx;
-        };
-
-        const startCyberpunkDrone = (vol = 0.3) => {
-            const ctx = getAudioContext();
-            if (!ctx || droneNodes) return;
-            const osc1 = ctx.createOscillator(); osc1.type = 'sawtooth'; osc1.frequency.value = 50;
-            const osc2 = ctx.createOscillator(); osc2.type = 'sawtooth'; osc2.frequency.value = 51;
-            const gainNode = ctx.createGain();
-            const filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 250;
-            osc1.connect(filter); osc2.connect(filter); filter.connect(gainNode); gainNode.connect(ctx.destination);
-            gainNode.gain.setValueAtTime(0, ctx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(vol * 0.3, ctx.currentTime + 2);
-            osc1.start(); osc2.start();
-            droneNodes = { osc1, osc2, gainNode };
-        };
-
-        const stopCyberpunkDrone = () => {
-            if (droneNodes) {
-                try {
-                    droneNodes.gainNode.gain.linearRampToValueAtTime(0, getAudioContext().currentTime + 1);
-                    setTimeout(() => { droneNodes.osc1.stop(); droneNodes.osc2.stop(); }, 1000);
-                } catch(e){}
-                droneNodes = null;
-            }
-        };
-
-        const synthSFX = (type, vol = 0.5) => {
-            try {
-                const ctx = getAudioContext();
-                if (!ctx) return;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain); gain.connect(ctx.destination);
-                const now = ctx.currentTime;
-                
-                if (type === 'click') {
-                    osc.type = 'square'; osc.frequency.setValueAtTime(800, now);
-                    gain.gain.setValueAtTime(vol*0.1, now); osc.stop(now + 0.05);
-                } else if (type === 'success') {
-                    osc.type = 'triangle'; osc.frequency.linearRampToValueAtTime(880, now + 0.1);
-                    gain.gain.setValueAtTime(vol*0.2, now); osc.stop(now + 0.6);
-                } else if (type === 'error') {
-                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(50, now+0.3);
-                    gain.gain.setValueAtTime(vol*0.2, now); osc.stop(now + 0.3);
-                }
-                osc.start(now);
-            } catch(e) {}
-        };
-
-        // --- GAME DATA ---
         const SQUADS = [
             { name: 'Cobra', icon: '🐍' }, { name: 'Tigre', icon: '🐅' }, { name: 'Halcón', icon: '🦅' }, 
             { name: 'Lobo', icon: '🐺' }, { name: 'Tiburón', icon: '🦈' }, { name: 'Águila', icon: '🦅' },
             { name: 'Pantera', icon: '🐆' }, { name: 'Oso', icon: '🐻' }, { name: 'León', icon: '🦁' }, 
             { name: 'Dragón', icon: '🐉' }, { name: 'Fénix', icon: '🐦‍🔥' }, { name: 'Toro', icon: '🐂' },
-            { name: 'Rino', icon: '🦏' }, { name: 'Zorro', icon: '🦊' }, { name: 'Búho', icon: '🦉' }, 
-            { name: 'Gorila', icon: '🦍' }, { name: 'Araña', icon: '🕷️' }, { name: 'Escorpión', icon: '🦂' },
-            { name: 'Cuervo', icon: '🐦‍⬛' }, { name: 'Pulpo', icon: '🐙' }, { name: 'Elefante', icon: '🐘' }, 
-            { name: 'Caballo', icon: '🐎' }, { name: 'Ciervo', icon: '🦌' }, { name: 'Cisne', icon: '🦢' },
-            { name: 'Camaleón', icon: '🦎' }, { name: 'Tortuga', icon: '🐢' }, { name: 'Pingüino', icon: '🐧' }, 
-            { name: 'Murciélago', icon: '🦇' }, { name: 'Cangrejo', icon: '🦀' }, { name: 'Medusa', icon: '🪼' }
+            { name: 'Zorro', icon: '🦊' }, { name: 'Búho', icon: '🦉' }, { name: 'Araña', icon: '🕷️' },
+            { name: 'Escorpión', icon: '🦂' }, { name: 'Cuervo', icon: '🐦‍⬛' }, { name: 'Pulpo', icon: '🐙' },
+            { name: 'Elefante', icon: '🐘' }, { name: 'Caballo', icon: '🐎' }, { name: 'Rinoceronte', icon: '🦏' },
+            { name: 'Gorila', icon: '🦍' }, { name: 'Murciélago', icon: '🦇' }, { name: 'Cisne', icon: '🦢' },
+            { name: 'Pingüino', icon: '🐧' }, { name: 'Medusa', icon: '🪼' }, { name: 'Cangrejo', icon: '🦀' },
+            { name: 'Tortuga', icon: '🐢' }, { name: 'Camaleón', icon: '🦎' }, { name: 'Venado', icon: '🦌' }
         ];
 
+        const TRACKS = {
+            LOBBY: ["./audio/cyber.mp3", "./audio/music.mp3"],
+            GAME: ["./audio/track1.mp3", "./audio/track2.mp3", "./audio/track3.mp3", "./audio/track4.mp3", "./audio/track5.mp3"],
+            WIN: ["./audio/ganador01.mp3", "./audio/ganador02.mp3", "./audio/background.mp3"]
+        };
+
+        const EXAMPLE_CSV = `Tipo;Pregunta;R1;R2;R3;R4;Tiempo;Correcta;URL Imagen
+quiz;¿Para qué se utiliza comúnmente la IA en gestión de redes?;Generar IP;Optimizar tráfico;Instalar conectores;Fabricar cables;45;2;
+quiz;¿Qué describe la automatización de sistemas en el hogar?;IoT Industrial;Domótica;Ciberseguridad;Robótica;45;2;
+quiz;¿Qué banda WiFi tiene mayor alcance?;2.4 GHz;900 MHz;6 GHz;5 GHz;45;1;
+quiz;¿Qué banda WiFi es más rápida y menos congestionada?;900 MHz;5 GHz;10 GHz;2.4 GHz;45;2;
+quiz;¿Cuál es el beneficio principal del PLC?;Eliminar router;Usar cable eléctrico existente;Conexión segura;Máxima velocidad;45;2;
+quiz;¿En qué capa TCP/IP opera HTTP?;Transporte;Acceso a Red;Internet;Aplicación;45;4;
+quiz;¿Qué característica permite redirigir tráfico en WiFi Mesh?;Autoreparación;WPA3;Roaming fluido;Conmutación;45;1;
+quiz;¿Qué es clave en una red WiFi Mesh?;Servidor de impresión;Cable UTP;Un punto central;Roaming automático;45;4;
+quiz;¿Qué NO es ventaja de redes cableadas?;Menor latencia;Mayor seguridad;Libertad de movimiento;Mayor fiabilidad;45;3;
+quiz;¿Qué categoría de cable UTP soporta 1 Gbps?;Cat 5e;Cat 7;Cat 3;Cat 6;45;1;
+quiz;¿Qué hardware necesita un PC para comunicarse en red?;Router;CPU;Fuente;Adaptador de red;45;4;
+quiz;¿Qué término describe dispositivos físicos conectados a Internet?;IoT;Big Data;Fog Computing;LAN;45;1;
+quiz;¿Qué conector se usa para UTP en Ethernet?;USB-C;HDMI;RJ11;RJ45;45;4;
+quiz;¿Uno de los desafíos del Deep Learning y Big Data es?;Coste de fibra;Incompatibilidad Bluetooth;Problemas de privacidad;Velocidad baja PLC;45;3;
+quiz;¿Diferencia entre switch y hub?;Hub es inalámbrico;Hub es más rápido;Switch dirige a destino;Switch tiene un puerto;45;3;
+quiz;¿Qué dispositivo retransmite datos a todos los puertos?;Hub;Router;Punto de acceso;Switch;45;1;
+quiz;¿Qué dispositivo traduce entre redes con protocolos diferentes?;Gateway;Repetidor;Puente;Switch;45;1;
+quiz;¿Qué dispositivo amplifica señal WiFi?;Puente;Servidor impresión;Repetidor WiFi;Switch;45;3;
+quiz;¿Qué dispositivo interconecta equipos en una LAN?;Puente;Repetidor;Router;Switch;45;4;
+quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetidor;Hub;Bridge;45;4;`;
+
         const formatTime = (ms) => {
-            if (!ms) return "00:00";
-            const s = Math.floor(ms / 1000);
-            return `${Math.floor(s / 60).toString().padStart(2,'0')}:${(s % 60).toString().padStart(2,'0')}`;
+            const totalSec = Math.floor(ms / 1000);
+            const min = Math.floor(totalSec / 60);
+            const sec = totalSec % 60;
+            return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
         };
 
-        const Typewriter = ({ text, className }) => {
-            const [d, setD] = useState('');
+        const downloadCSV = () => {
+            const blob = new Blob([EXAMPLE_CSV], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "plantilla_mision_escape.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
+        const useAudioManager = (stage, role, hasFinished) => {
+            const audioRef = useRef(new Audio());
+            const [volume, setVolume] = useState(0.4);
+            const [muted, setMuted] = useState(false);
+            const [trackIdx, setTrackIdx] = useState(0);
+            const playlist = hasFinished ? TRACKS.WIN : (stage === 'admin-monitor' ? TRACKS.GAME : TRACKS.LOBBY);
+
+            useEffect(() => { audioRef.current.volume = muted ? 0 : volume; }, [volume, muted]);
             useEffect(() => {
-                let i = 0; const t = setInterval(() => {
-                    if (i < text.length) setD(x => x + text.charAt(i++)); else clearInterval(t);
-                }, 30);
-                return () => clearInterval(t);
-            }, [text]);
-            return <div className={className}>{d}<span className="animate-pulse">_</span></div>;
-        };
+                if (role !== 'admin') return;
+                const track = playlist[trackIdx % playlist.length];
+                audioRef.current.src = track;
+                audioRef.current.loop = true;
+                audioRef.current.play().catch(() => {});
+            }, [trackIdx, playlist, role]);
 
-        const INITIAL_STATE = { stage: 'selection', roomId: '', connectedSquads: [], finishedSquads: [], takenSquads: [], sectors: [], squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0 };
+            return { volume, setVolume, muted, setMuted, next: () => setTrackIdx(i => i + 1), prev: () => setTrackIdx(i => i > 0 ? i - 1 : playlist.length - 1) };
+        };
 
         function App() {
-            const [gameState, setGameState] = useState(INITIAL_STATE);
-            const [volume, setVolume] = useState(0.4);
+            const [gameState, setGameState] = useState({ stage: 'selection', role: null, roomId: '', connectedSquads: [], finishedSquads: [], takenSquads: [], sectors: [], squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0 });
+            const stateRef = useRef(gameState);
+            useEffect(() => { stateRef.current = gameState; }, [gameState]);
+
+            const [vaultCodes, setVaultCodes] = useState(['','','','','']);
             const [lockout, setLockout] = useState(0);
             const [activeSectorId, setActiveSectorId] = useState(null);
-            const [vaultCodes, setVaultCodes] = useState(['','','','','']);
-            const [showHelp, setShowHelp] = useState(false);
+            const [showRules, setShowRules] = useState(false);
             
             const peerRef = useRef(null);
             const connRef = useRef(null);
             const adminConns = useRef([]);
             const startTimeRef = useRef(null);
 
-            const playSFX = (t) => synthSFX(t, volume);
+            const { volume, setVolume, muted, setMuted, next, prev } = useAudioManager(gameState.stage, gameState.role, gameState.finishedSquads.length > 0);
 
-            useEffect(() => {
-                if (lockout > 0) { const t = setInterval(() => setLockout(l => l-1), 1000); return () => clearInterval(t); }
-            }, [lockout]);
+            useEffect(() => { if (lockout > 0) { const t = setInterval(() => setLockout(l => l-1), 1000); return () => clearInterval(t); } }, [lockout]);
 
-            const startAdmin = (file) => {
-                startCyberpunkDrone(volume);
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const lines = e.target.result.trim().split('\n');
-                    const questions = lines.slice(1).map((l, i) => {
-                        const p = l.split(';').map(x => x.trim().replace(/^"|"$/g, ''));
-                        return { id: i, question: p[1], options: [p[2],p[3],p[4],p[5]], correctIndex: (parseInt(p[7])||1)-1, imageUrl: p[8] };
-                    }).filter(q => q.question);
-                    
+            const reset = () => { if(peerRef.current) peerRef.current.destroy(); setGameState({ stage: 'selection', role: null, roomId: '', connectedSquads: [], finishedSquads: [], takenSquads: [], sectors: [], squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0 }); setVaultCodes(['','','','','']); };
+
+            const startAdmin = (fileOrText, isExample = false) => {
+                const initPeer = (questions) => {
                     const id = Math.floor(10000 + Math.random() * 90000).toString();
                     const peer = new Peer(`sr-host-${id}`);
-                    peer.on('open', () => setGameState(s => ({...s, stage: 'admin-lobby', roomId: id, rawQuestions: questions})));
+                    peer.on('open', () => setGameState(s => ({...s, role: 'admin', stage: 'admin-lobby', roomId: id, rawQuestions: questions})));
                     peer.on('connection', c => {
-                        c.on('open', () => { adminConns.current.push(c); c.send({type:'SYNC', taken: gameState.connectedSquads}); });
+                        c.on('open', () => { adminConns.current.push(c); c.send({type:'SYNC', taken: stateRef.current.connectedSquads}); });
                         c.on('data', d => {
                             if(d.type==='REQ') {
-                                if(gameState.connectedSquads.includes(d.name)) c.send({type:'NO'});
-                                else {
+                                setGameState(prevS => {
+                                    if(prevS.connectedSquads.includes(d.name)) { c.send({type:'NO'}); return prevS; }
                                     c.send({type:'OK'});
-                                    setGameState(prev => {
-                                        const next = [...prev.connectedSquads, d.name];
-                                        adminConns.current.forEach(ac => ac.open && ac.send({type:'SYNC', taken: next}));
-                                        return {...prev, connectedSquads: next};
-                                    });
-                                }
+                                    const nextS = [...prevS.connectedSquads, d.name];
+                                    adminConns.current.forEach(ac => { if (ac.open) ac.send({type:'SYNC', taken: nextS}); });
+                                    return {...prevS, connectedSquads: nextS};
+                                });
                             }
                             if(d.type==='FIN') {
                                 const time = Date.now() - startTimeRef.current;
-                                setGameState(prev => {
-                                    const nextFin = [...prev.finishedSquads, {name:d.name, time}];
+                                setGameState(prevS => {
+                                    const nextFin = [...prevS.finishedSquads, {name:d.name, time}];
                                     c.send({type:'WIN_DATA', rank: nextFin.length, time});
-                                    return {...prev, finishedSquads: nextFin};
+                                    return {...prevS, finishedSquads: nextFin};
                                 });
                             }
                         });
                     });
                     peerRef.current = peer;
                 };
-                reader.readAsText(file);
+                if (isExample) initPeer(processCSV(EXAMPLE_CSV));
+                else if (fileOrText) { const r = new FileReader(); r.onload = (e) => initPeer(processCSV(e.target.result)); r.readAsText(fileOrText); }
             };
 
-            const joinSquad = (rid) => {
-                startCyberpunkDrone(volume);
+            const joinRoom = (rid) => {
+                if(!rid) return;
                 const peer = new Peer();
                 peer.on('open', () => {
                     const c = peer.connect(`sr-host-${rid}`);
-                    c.on('open', () => connRef.current = c);
+                    c.on('open', () => { connRef.current = c; setGameState(s => ({...s, role: 'squad'})); });
                     c.on('data', d => {
                         if(d.type==='SYNC') setGameState(s => ({...s, takenSquads: d.taken, stage: s.stage === 'selection' ? 'squad-selection' : s.stage}));
                         if(d.type==='OK') setGameState(s => ({...s, stage: 'squad-lobby'}));
-                        if(d.type==='NO') { alert("Ocupado"); setGameState(s => ({...s, isSquadSelecting: false})); }
+                        if(d.type==='NO') { alert("Avatar no disponible"); setGameState(s => ({...s, isSquadSelecting: false})); }
                         if(d.type==='GO') setGameState(s => ({...s, stage: 'squad-intro', sectors: d.sectors}));
                         if(d.type==='WIN_DATA') setGameState(s => ({...s, stage: 'squad-win', finalRank: d.rank, finalTime: d.time}));
+                        if(d.type==='RESET') reset();
                     });
                 });
                 peerRef.current = peer;
             };
 
-            const reset = () => {
-                if(peerRef.current) peerRef.current.destroy();
-                stopCyberpunkDrone();
-                setGameState(INITIAL_STATE);
+            const processCSV = (text) => {
+                const lines = text.trim().split('\n');
+                return lines.slice(1).map((l, i) => {
+                    const p = l.split(';').map(x => x.trim().replace(/^"|"$/g, ''));
+                    return { id: i, question: p[1], options: [p[2],p[3],p[4],p[5]], correctIndex: (parseInt(p[7])||1)-1 };
+                }).filter(q => q.question);
             };
 
-            if (lockout > 0) return (
-                <div style={{position:'fixed', inset:0, background:'black', zIndex:5000, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', color:'var(--c-red)'}}>
-                    <div className="title-huge" style={{color:'var(--c-red)', fontSize:'5rem'}}>BLOQUEO</div>
-                    <div style={{fontSize:'8rem', fontWeight:'900'}}>{lockout}</div>
-                </div>
-            );
+            const handleTerminate = () => { adminConns.current.forEach(c => { if(c.open) c.send({type:'RESET'}); }); reset(); setGameState(s => ({...s, stage: 'admin-setup', role: 'admin'})); };
 
-            // RENDER LOGIC
             return (
-                <div className="relative w-full h-full">
-                    {/* Help Button */}
-                    {gameState.stage === 'selection' && (
-                        <button onClick={() => setShowHelp(true)} className="btn-help">?</button>
+                <div>
+                    {gameState.role === 'admin' && (
+                        <div className="audio-player-admin">
+                            <button className="audio-ctrl-btn" onClick={prev}>&lt;&lt;</button>
+                            <button className="audio-ctrl-btn" onClick={() => setMuted(!muted)}>{muted ? '🔇' : '🔊'}</button>
+                            <button className="audio-ctrl-btn" onClick={next}>&gt;&gt;</button>
+                            <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(e)=>setVolume(parseFloat(e.target.value))} className="volume-slider" />
+                        </div>
                     )}
 
-                    {/* Help Modal */}
-                    {showHelp && (
-                        <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.9)', zIndex:4000, display:'flex', alignItems:'center', justifyContent:'center'}}>
-                            <div className="cyber-border" style={{maxWidth:'500px', width:'90%'}}>
-                                <h2 className="text-cyber-blue" style={{fontSize:'2rem', marginBottom:'1rem'}}>PROTOCOLO</h2>
-                                <ul style={{listStyle:'none', padding:0, lineHeight:'1.8'}}>
-                                    <li>1. Ingresa ID de Misión.</li>
-                                    <li>2. Elige Avatar (Rápido, son únicos).</li>
-                                    <li>3. Responde preguntas para hackear.</li>
-                                    <li>4. Obtén códigos y escapa.</li>
-                                </ul>
-                                <button onClick={() => setShowHelp(false)} className="btn-cyber" style={{borderColor:'var(--c-red)', color:'var(--c-red)'}}>CERRAR</button>
+                    {showRules && (
+                        <div className="modal-overlay" onClick={() => setShowRules(false)}>
+                            <div className="cyber-border rules-modal-content" data-label="PROTOCOL_V5.6" onClick={e=>e.stopPropagation()}>
+                                <h2 className="title-huge" style={{fontSize: '2rem'}}>MANUAL DE OPERACIONES</h2>
+                                <div style={{lineHeight: '1.6', fontSize: '0.9rem', color: '#fff'}}>
+                                    <p><strong>1. ACCESO:</strong> Un administrador crea el ID. Agentes usan matriz 6x5 para identificarse.</p>
+                                    <p><strong>2. SECTORES:</strong> Resuelve los desafíos de hackeo para obtener el código de acceso.</p>
+                                    <p><strong>3. BÓVEDA:</strong> Introduce los códigos en el panel derecho en el orden secuencial (S1 a S5).</p>
+                                    <p><strong>4. BLOQUEO:</strong> Cada fallo en la bóveda o hackeo congela el terminal 10 segundos.</p>
+                                    <p><strong>5. FIN DE MISIÓN:</strong> Detén el núcleo antes que los demás agentes para liderar el ranking.</p>
+                                </div>
+                                <button className="btn-cyber w-full" style={{marginTop: '2rem'}} onClick={() => setShowRules(false)}>ENTENDIDO</button>
                             </div>
                         </div>
                     )}
 
-                    {/* STAGES */}
                     {gameState.stage === 'selection' && (
-                        <div className="screen-center">
-                            <h1 className="title-huge text-center">SCAPE ROOM</h1>
-                            <div className="cyber-border" style={{width:'100%', maxWidth:'500px'}}>
-                                <div className="flex-col" style={{gap:'1rem'}}>
-                                    <input id="rid" type="text" placeholder="ID MISIÓN" maxLength={5} className="input-cyber" />
-                                    <button onClick={() => joinSquad(document.getElementById('rid').value)} className="btn-cyber">INICIAR ENLACE</button>
-                                </div>
-                                <div style={{marginTop:'2rem', borderTop:'1px solid #333', paddingTop:'1rem'}}>
-                                    <button onClick={() => setGameState(s => ({...s, stage: 'admin-setup'}))} style={{background:'none', border:'none', color:'var(--c-green)', opacity:0.5, width:'100%', fontSize:'0.8rem', cursor:'pointer'}}>// ACCESO ADMIN //</button>
+                        <div className="screen">
+                            <h1 className="title-huge">SCAPE ROOM</h1>
+                            <div className="cyber-border" data-label="USER_LOGIN" style={{maxWidth: '400px', width: '100%'}}>
+                                <input id="rid" type="text" placeholder="ID MISIÓN" maxLength={5} className="input-cyber" />
+                                <button onClick={() => joinRoom(document.getElementById('rid').value)} className="btn-cyber w-full mb-4">INGRESAR AL SISTEMA</button>
+                                <div className="flex-row" style={{display:'flex', gap:'10px'}}>
+                                    <button onClick={() => setShowRules(true)} className="btn-cyber btn-outline flex-1">NORMAS</button>
+                                    <button onClick={() => setGameState(s => ({...s, stage: 'admin-setup'}))} className="btn-cyber btn-outline flex-1">MODO ADMIN</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
                     {gameState.stage === 'admin-setup' && (
-                        <div className="screen-center">
-                            <div className="cyber-border" style={{width:'100%', maxWidth:'500px'}}>
-                                <h2 className="text-cyber-green" style={{fontSize:'1.5rem', marginBottom:'1.5rem'}}>CONFIGURAR NODO</h2>
-                                <input id="csvFile" type="file" accept=".csv" style={{color:'#888', marginBottom:'1.5rem', width:'100%'}} />
-                                <button onClick={() => startAdmin(document.getElementById('csvFile').files[0])} className="btn-cyber btn-start">LANZAR SERVIDOR</button>
-                                <button onClick={reset} style={{background:'none', border:'none', color:'#666', marginTop:'1rem', width:'100%', cursor:'pointer'}}>CANCELAR</button>
+                        <div className="screen">
+                            <div className="cyber-border flex-col" data-label="SCENARIO_LOADER" style={{maxWidth: '450px', width: '100%'}}>
+                                <h2 className="text-center mb-4">PROTOCOLO DE CARGA</h2>
+                                <input id="csvIn" type="file" accept=".csv" className="mb-4 w-full" />
+                                <button onClick={() => startAdmin(document.getElementById('csvIn').files[0])} className="btn-cyber w-full mb-2">LANZAR MISIÓN</button>
+                                <button onClick={() => startAdmin(null, true)} className="btn-cyber btn-outline w-full mb-2">CARGAR EJEMPLO</button>
+                                <button onClick={downloadCSV} className="btn-cyber btn-outline w-full mb-4" style={{borderColor:'var(--c-gold)', color:'var(--c-gold)', fontSize:'0.75rem'}}>DESCARGAR PLANTILLA CSV</button>
+                                <button onClick={reset} style={{background:'none', border:'none', color:'#444', cursor:'pointer', width: '100%'}}>CERRAR</button>
                             </div>
                         </div>
                     )}
 
                     {gameState.stage === 'admin-lobby' && (
-                        <div className="screen-center">
-                            <div className="uppercase text-cyber-blue" style={{marginBottom:'0.5rem'}}>ID DE MISIÓN</div>
-                            <div style={{fontSize:'4rem', fontWeight:'900', color:'var(--c-green)', border:'2px solid var(--c-green)', padding:'1rem 3rem', marginBottom:'2rem', background:'#000'}}>{gameState.roomId}</div>
-                            
-                            <div className="cyber-border" style={{width:'100%', maxWidth:'800px', height:'400px', display:'flex', flexDirection:'column'}}>
-                                <div style={{flex:1, overflowY:'auto', padding:'1rem'}}>
-                                    <h3 className="text-cyber-blue" style={{borderBottom:'1px solid #333', paddingBottom:'0.5rem', marginBottom:'1rem'}}>UNIDADES ({gameState.connectedSquads.length})</h3>
-                                    <div style={{display:'flex', flexWrap:'wrap', gap:'0.5rem'}}>
-                                        {gameState.connectedSquads.map(s => <span key={s} style={{background:'rgba(0,255,65,0.1)', color:'var(--c-green)', padding:'0.2rem 0.6rem', border:'1px solid var(--c-green)', fontSize:'0.9rem'}}>{s}</span>)}
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={() => {
-                                        playSFX('access');
-                                        startTimeRef.current = Date.now();
-                                        const qs = gameState.rawQuestions;
-                                        adminConns.current.forEach(c => {
-                                            const shuffled = [...qs].sort(()=>Math.random()-.5);
-                                            const sectors = [1,2,3,4,5].map(i => ({ id: i, questions: shuffled.slice((i-1)*4, i*4), accessCode: Math.floor(Math.random()*90+10).toString(), isSolved: false }));
-                                            c.send({type:'GO', sectors});
-                                        });
-                                        setGameState(s => ({...s, stage: 'admin-monitor', sectors: []}));
-                                    }}
-                                    disabled={gameState.connectedSquads.length === 0}
-                                    className="btn-cyber btn-start"
-                                >
-                                    INICIAR MISIÓN
-                                </button>
-                            </div>
+                        <div className="screen">
+                            <p className="pulse">ID DE SEÑAL ACTIVA:</p>
+                            <div style={{fontSize: '5rem', fontWeight: 900, border: '4px solid var(--c-green)', padding: '0.5rem 3rem', background: '#000', margin: '1rem 0'}}>{gameState.roomId}</div>
+                            <button onClick={() => {
+                                startTimeRef.current = Date.now();
+                                adminConns.current.forEach(c => {
+                                    const shuffled = [...gameState.rawQuestions].sort(()=>Math.random()-.5);
+                                    const sectors = [1,2,3,4,5].map(i => ({ id: i, questions: shuffled.slice((i-1)*4, i*4), accessCode: Math.floor(Math.random()*90+10).toString(), isSolved: false }));
+                                    c.send({type:'GO', sectors});
+                                });
+                                setGameState(s => ({...s, stage: 'admin-monitor'}));
+                            }} disabled={gameState.connectedSquads.length === 0} className="btn-cyber">INICIAR PROTOCOLO</button>
+                            <div style={{marginTop: '2rem', fontSize: '0.8rem', opacity: 0.5}}>EQUIPOS: {gameState.connectedSquads.length}</div>
                         </div>
                     )}
 
                     {gameState.stage === 'squad-selection' && (
-                        <div className="screen-center">
-                            <h2 className="text-cyber-blue" style={{fontSize:'2rem', marginBottom:'1.5rem'}}>SELECCIÓN DE AVATAR</h2>
-                            <div className="cyber-border" style={{width:'100%', maxWidth:'900px', maxHeight:'70vh', overflowY:'auto'}}>
-                                <div className="squad-grid">
+                        <div className="screen">
+                            <h2 className="mb-4">IDENTIFICACIÓN DE AGENTE</h2>
+                            <div className="cyber-border w-full" data-label="AVAILABILITY_MATRIX_6X5" style={{maxWidth: '1000px'}}>
+                                <div className="squad-grid-6x5">
                                     {SQUADS.map(s => {
                                         const taken = gameState.takenSquads.includes(s.name);
                                         const selected = gameState.squadAnimal === s.name;
                                         return (
-                                            <button 
-                                                key={s.name} 
-                                                disabled={taken || gameState.isSquadSelecting}
-                                                onClick={() => {
-                                                    playSFX('click');
-                                                    setGameState(p => ({...p, isSquadSelecting: true, squadAnimal: s.name}));
-                                                    connRef.current.send({type:'REQ', name: s.name});
-                                                }}
-                                                className={`squad-card ${selected ? 'selected' : ''}`}
-                                            >
-                                                <div className="squad-icon">{s.icon}</div>
-                                                <div className="squad-name">{s.name}</div>
+                                            <button key={s.name} disabled={taken || gameState.isSquadSelecting} onClick={() => {
+                                                setGameState(p => ({...p, isSquadSelecting: true, squadAnimal: s.name}));
+                                                connRef.current.send({type:'REQ', name: s.name});
+                                            }} className={`squad-card ${selected ? 'selected' : ''}`}>
+                                                <span className="squad-icon">{s.icon}</span>
+                                                <span className="squad-name">{s.name}</span>
                                             </button>
                                         );
                                     })}
@@ -585,111 +471,86 @@
                     )}
 
                     {gameState.stage === 'squad-lobby' && (
-                        <div className="screen-center">
-                            <div style={{fontSize:'6rem', animation:'pulse 1s infinite'}}>📡</div>
-                            <h2 className="text-cyber-green uppercase" style={{letterSpacing:'2px', marginTop:'1rem'}}>ESPERANDO SEÑAL...</h2>
+                        <div className="screen">
+                            <div style={{fontSize: '6rem'}} className="pulse">📡</div>
+                            <h2 style={{letterSpacing: '5px'}}>ENLACE ESTABLECIDO</h2>
+                            <p style={{opacity: 0.5}}>Esperando orden central...</p>
                         </div>
                     )}
 
                     {gameState.stage === 'squad-intro' && (
-                        <div className="screen-center">
-                            <div className="cyber-border" style={{maxWidth:'600px', padding:'2rem'}}>
-                                <Typewriter text={`>>> INICIANDO PROTOCOLO HYDRA.\n>>> AGENTE: ${gameState.squadAnimal}\n>>> MISIÓN: HACKEAR 5 SECTORES.\n>>> ESTADO: LISTO.`} className="text-cyber-green" style={{fontSize:'1.2rem', whiteSpace:'pre-wrap', lineHeight:'1.5', marginBottom:'2rem', display:'block'}} />
-                                <button onClick={() => setGameState(s => ({...s, stage: 'squad-game'}))} className="btn-cyber">INFILTRARSE</button>
+                        <div className="screen">
+                            <div className="cyber-border" data-label="SYSTEM_BOOT" style={{maxWidth: '500px', width: '100%'}}>
+                                <p style={{fontSize: '1.2rem', lineHeight: '2', whiteSpace: 'pre-wrap'}}>{`> GENTE_${gameState.squadAnimal?.toUpperCase()}\n> OBJETIVO: BÓVEDA HYDRA\n> ESTADO: LISTO`}</p>
+                                <button onClick={() => setGameState(s => ({...s, stage: 'squad-game'}))} className="btn-cyber w-full" style={{marginTop: '2rem'}}>INICIAR HACKEO</button>
                             </div>
                         </div>
                     )}
 
                     {gameState.stage === 'squad-game' && (
-                        <div style={{padding:'1rem', minHeight:'100vh', display:'flex', flexDirection:'column', gap:'1rem'}}>
-                            <div className="cyber-border" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                                <span className="text-cyber-green uppercase" style={{fontWeight:'bold', fontSize:'1.2rem'}}>AGENTE {gameState.squadAnimal}</span>
-                                <div style={{display:'flex', gap:'0.5rem'}}>
-                                    {[1,2,3,4,5].map(i => <div key={i} style={{width:'12px', height:'12px', borderRadius:'50%', background: gameState.sectors.find(s=>s.id===i)?.isSolved ? 'var(--c-green)' : '#333', boxShadow: gameState.sectors.find(s=>s.id===i)?.isSolved ? '0 0 10px var(--c-green)' : 'none'}}></div>)}
+                        <div className="game-layout">
+                            {lockout > 0 && (
+                                <div className="modal-overlay" style={{background: 'rgba(100,0,0,0.95)', flexDirection: 'column'}}>
+                                    <div className="cyber-border" data-label="SECURITY_PROTOCOL_ALERT" style={{padding: '3rem', maxWidth: '600px', width: '90%', textAlign: 'center', borderColor: 'white', borderStyle: 'double'}}>
+                                        <h2 className="pulse" style={{color: 'var(--c-red)', fontSize: '2rem', marginBottom: '1.5rem'}}>SISTEMA BLOQUEADO</h2>
+                                        <p style={{color: '#fff', fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '2rem', fontWeight: 'bold'}}>
+                                            EL SISTEMA HA SIDO BLOQUEADO COMO MEDIDA DE SEGURIDAD AL DETECTARSE UNA INTRUSIÓN.
+                                        </p>
+                                        <div style={{fontSize: '6rem', fontWeight: 900, color: '#fff', textShadow: '0 0 20px var(--c-red)'}}>{lockout}</div>
+                                        <div style={{fontSize: '0.7rem', color: 'var(--c-red)', marginTop: '1.5rem', letterSpacing: '2px'}}>REINICIANDO PROTOCOLO DE DEFENSA...</div>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div style={{display:'flex', gap:'1rem', flexWrap:'wrap', flex:1}}>
-                                <div style={{flex:1, minWidth:'300px', display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(140px, 1fr))', gap:'1rem'}}>
+                            )}
+                            <div className="main-panel">
+                                <div className="cyber-border" data-label="HUD_V5.6" style={{padding: '1.5rem'}}>
+                                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem'}}>
+                                        <div style={{fontWeight: 900, color: 'var(--c-green)', fontSize: '1.8rem'}}>GENTE_{gameState.squadAnimal?.toUpperCase()}</div>
+                                        <button onClick={() => setShowRules(true)} className="btn-cyber btn-outline" style={{padding:'0.5rem 1rem', fontSize:'0.7rem'}}>VER NORMAS</button>
+                                    </div>
+                                    <div className="instruction-panel">
+                                        <strong>PROTOCOLO HYDRA:</strong><br/>
+                                        1. Hackea los 5 sectores para obtener los códigos.<br/>
+                                        2. Introduce los 5 códigos en la bóveda derecha en el orden secuencial.<br/>
+                                        3. Solo tienes un intento por carga en la bóveda final.
+                                    </div>
+                                </div>
+                                <div className="sector-vertical-list">
                                     {gameState.sectors.map(s => (
-                                        <div key={s.id} onClick={() => !s.isSolved && setActiveSectorId(s.id)} className="cyber-border" style={{cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'120px', background: s.isSolved ? 'rgba(0,255,65,0.05)' : 'rgba(0,0,0,0.8)'}}>
-                                            <span className="text-cyber-blue" style={{fontSize:'0.8rem', marginBottom:'0.5rem'}}>SECTOR 0{s.id}</span>
-                                            <span style={{fontSize:'2.5rem', fontWeight:'900', color: s.isSolved ? 'var(--c-green)' : '#fff'}}>{s.isSolved ? s.accessCode : '??'}</span>
+                                        <div key={s.id} onClick={() => !s.isSolved && setActiveSectorId(s.id)} className={`sector-row ${s.isSolved ? 'solved' : ''}`}>
+                                            <div><div className="sector-label">SECTOR_0{s.id}</div><div className="sector-status">{s.isSolved ? 'ACCESO_CONCEDIDO' : 'ACCESO_DENEGADO'}</div></div>
+                                            <div className="sector-code">{s.isSolved ? s.accessCode : '??'}</div>
                                         </div>
                                     ))}
                                 </div>
-
-                                <div className="cyber-border" style={{width:'100%', maxWidth:'300px', display:'flex', flexDirection:'column', gap:'1rem'}}>
-                                    <h3 className="text-cyber-blue text-center uppercase">BÓVEDA HYDRA</h3>
-                                    <div style={{display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:'5px'}}>
-                                        {vaultCodes.map((v, i) => <input key={i} maxLength={2} value={v} onChange={e=>{ const n=[...vaultCodes]; n[i]=e.target.value; setVaultCodes(n); }} className="vault-input" />)}
-                                    </div>
-                                    <button onClick={() => {
-                                        if(gameState.sectors.every((s,i) => vaultCodes[i] === s.accessCode)) { playSFX('success'); connRef.current.send({type:'FIN', name: gameState.squadAnimal}); }
-                                        else { playSFX('error'); setLockout(5); }
-                                    }} className="btn-cyber" style={{marginTop:'auto'}}>ABRIR</button>
-                                </div>
                             </div>
-                            
-                            {/* MODAL PREGUNTAS */}
-                            {activeSectorId && (
-                                <SectorModal 
-                                    sector={gameState.sectors.find(s => s.id === activeSectorId)} 
-                                    playSFX={playSFX}
-                                    onClose={() => setActiveSectorId(null)}
-                                    onSolved={(id) => {
-                                        playSFX('success');
-                                        setGameState(s => ({...s, sectors: s.sectors.map(x => x.id===id ? {...x, isSolved:true} : x)}));
-                                        setActiveSectorId(null);
-                                    }}
-                                    onLock={() => { playSFX('error'); setLockout(5); setActiveSectorId(null); }}
-                                />
-                            )}
+                            <div className="vault-panel">
+                                <h3 className="text-center" style={{fontSize: '1rem', letterSpacing: '4px'}}>BÓVEDA_FINAL</h3>
+                                <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px'}}>{vaultCodes.map((v, i) => <input key={i} maxLength={2} value={v} onChange={e=>{ const n=[...vaultCodes]; n[i]=e.target.value; setVaultCodes(n); }} className="vault-input" />)}</div>
+                                <button onClick={() => { if(gameState.sectors.every((s,i) => vaultCodes[i] === s.accessCode)) { connRef.current.send({type:'FIN', name: gameState.squadAnimal}); } else { setLockout(10); } }} className="btn-cyber w-full" style={{marginTop: 'auto', height: '100px'}}>DETENER NÚCLEO</button>
+                            </div>
+                            {activeSectorId && <SectorModal sector={gameState.sectors.find(s => s.id === activeSectorId)} onSolved={(id) => { setGameState(s => ({...s, sectors: s.sectors.map(x => x.id===id ? {...x, isSolved:true} : x)})); setActiveSectorId(null); }} onLock={() => { setLockout(10); setActiveSectorId(null); }} />}
                         </div>
                     )}
 
                     {gameState.stage === 'squad-win' && (
-                        <div className="screen-center">
-                            <h2 className="title-huge text-center" style={{fontSize:'4rem', lineHeight:'1'}}>MISIÓN<br/>CUMPLIDA</h2>
-                            <div style={{display:'flex', gap:'2rem', marginBottom:'2rem'}}>
-                                <div className="cyber-border text-center">
-                                    <div style={{fontSize:'0.8rem', color:'var(--c-blue)'}}>TIEMPO</div>
-                                    <div style={{fontSize:'3rem', fontFamily:'monospace'}}>{formatTime(gameState.finalTime)}</div>
-                                </div>
-                                <div className="cyber-border text-center">
-                                    <div style={{fontSize:'0.8rem', color:'var(--c-gold)'}}>RANKING</div>
-                                    <div style={{fontSize:'3rem', color:'var(--c-gold)', fontWeight:'900'}}>#{gameState.finalRank}</div>
-                                </div>
+                        <div className="screen">
+                            <h2 className="title-huge">MISION COMPLETADA</h2>
+                            <div className="cyber-border" data-label="DATA_LOG" style={{padding:'3rem', textAlign:'center'}}>
+                                <p style={{color:'var(--c-gold)', fontSize:'1.5rem'}}>#RANKING: {gameState.finalRank}</p>
+                                <p style={{fontSize:'3rem', margin:'1rem 0'}}>{formatTime(gameState.finalTime)}</p>
                             </div>
-                            <button onClick={reset} className="btn-cyber btn-start" style={{width:'auto', padding:'1rem 3rem'}}>NUEVA MISIÓN</button>
                         </div>
                     )}
 
                     {gameState.stage === 'admin-monitor' && (
-                        <div style={{padding:'2rem', minHeight:'100vh', display:'flex', flexDirection:'column'}}>
-                            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'2rem', borderBottom:'1px solid rgba(0,255,65,0.2)', paddingBottom:'1rem'}}>
-                                <h1 className="text-cyber-green" style={{fontSize:'2rem', margin:0}}>CONTROL HYDRA</h1>
-                                <button onClick={reset} style={{border:'1px solid var(--c-red)', background:'none', color:'var(--c-red)', padding:'0.5rem 1rem', cursor:'pointer'}}>TERMINAR</button>
-                            </div>
-                            <div style={{flex:1, display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:'2rem'}}>
-                                <div className="cyber-border" style={{overflowY:'auto'}}>
-                                    <h3 className="text-cyber-gold" style={{fontSize:'1.5rem', marginBottom:'1rem'}}>RANKING</h3>
-                                    {gameState.finishedSquads.map((s,i) => (
-                                        <div key={i} style={{display:'flex', justifyContent:'space-between', padding:'1rem', background:'rgba(255, 215, 0, 0.1)', borderLeft:'4px solid var(--c-gold)', marginBottom:'0.5rem'}}>
-                                            <span style={{fontWeight:'bold'}}>#{i+1} {s.name}</span>
-                                            <span style={{fontFamily:'monospace'}}>{formatTime(s.time)}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="cyber-border">
-                                    <h3 className="text-cyber-blue" style={{fontSize:'1.5rem', marginBottom:'1rem'}}>EN PROGRESO</h3>
-                                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'0.5rem'}}>
-                                        {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f=>f.name===s)).map(s => (
-                                            <div key={s} style={{padding:'0.5rem', border:'1px solid var(--c-blue)', background:'rgba(0, 243, 255, 0.05)', display:'flex', justifyContent:'space-between'}}>
-                                                <span>{s}</span><span style={{animation:'pulse 1s infinite'}}>...</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                        <div className="screen" style={{padding: '2rem'}}>
+                            <div style={{width:'100%', display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}><h1>CENTRO_MONITOREO</h1><button onClick={handleTerminate} className="btn-cyber" style={{background:'var(--c-red)', color:'#fff'}}>TERMINAR GLOBAL</button></div>
+                            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2rem', width:'100%', flex:1}}>
+                                <div className="cyber-border" data-label="TERMINAL_WINS">{gameState.finishedSquads.map((s,i) => (<div key={i} style={{display:'flex', justifyContent:'space-between', padding:'15px', borderBottom:'1px solid #333'}}><span>#{i+1} GENTE_{s.name.toUpperCase()}</span><span style={{color:'var(--c-gold)'}}>{formatTime(s.time)}</span></div>))}</div>
+                                <div className="cyber-border" data-label="IN_FIELD">
+                                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>{gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f=>f.name===s)).map(s => (
+                                        <div key={s} style={{padding:'10px', border:'1px solid var(--c-blue)'}}>{s}</div>
+                                    ))}</div>
                                 </div>
                             </div>
                         </div>
@@ -698,62 +559,51 @@
             );
         }
 
-        const SectorModal = ({ sector, playSFX, onSolved, onLock }) => {
+        const SectorModal = ({ sector, onSolved, onLock }) => {
             const [idx, setIdx] = useState(0);
             const [sel, setSel] = useState(null);
-            const [shuffled, setShuffled] = useState([]);
             const q = sector.questions[idx];
-
-            useEffect(() => {
-                if(q) {
-                    const ops = [...q.options];
-                    for(let i=ops.length-1; i>0; i--) { const j=Math.floor(Math.random()*(i+1)); [ops[i], ops[j]] = [ops[j], ops[i]]; }
-                    setShuffled(ops);
-                }
-            }, [q]);
 
             const check = (i) => {
                 if(sel !== null) return;
                 setSel(i);
-                const isCorrect = shuffled[i] === q.options[q.correctIndex];
-                if(isCorrect) {
-                    playSFX('success');
-                    setTimeout(() => {
+                setTimeout(() => {
+                    if(i === q.correctIndex) {
                         if(idx+1 < sector.questions.length) { setIdx(idx+1); setSel(null); }
                         else onSolved(sector.id);
-                    }, 800);
-                } else {
-                    playSFX('error');
-                    setTimeout(onLock, 800);
-                }
+                    } else onLock();
+                }, 800);
             };
 
             return (
-                <div style={{position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.95)', display:'flex', alignItems:'center', justifyContent:'center'}}>
-                    <div className="cyber-border" style={{width:'100%', maxWidth:'700px', padding:'2rem', margin:'1rem'}}>
-                        <div style={{display:'flex', justifyContent:'space-between', marginBottom:'1.5rem', borderBottom:'1px solid rgba(0,255,65,0.3)', paddingBottom:'0.5rem'}}>
-                            <span className="text-cyber-green" style={{fontSize:'1.5rem', fontWeight:'900'}}>SECTOR 0{sector.id}</span>
-                            <span className="text-cyber-blue">{idx+1}/{sector.questions.length}</span>
+                <div className="modal-overlay">
+                    <div className="detailed-modal">
+                        <div className="modal-header-bar">
+                            <span>TERMINAL_BREACH_SECTOR_0{sector.id}</span>
+                            <span className="pulse">ESTADO: HACKEANDO...</span>
                         </div>
-                        {q.imageUrl && <img src={q.imageUrl} style={{width:'100%', height:'200px', objectFit:'cover', marginBottom:'1.5rem', border:'1px solid #333', filter:'grayscale(1)'}} />}
-                        <p style={{fontSize:'1.2rem', marginBottom:'2rem', lineHeight:'1.4'}}>{q.question}</p>
-                        <div style={{display:'grid', gap:'1rem'}}>
-                            {shuffled.map((op, i) => (
-                                <button 
-                                    key={i} 
-                                    onClick={() => check(i)}
-                                    disabled={sel !== null}
-                                    style={{
-                                        padding:'1rem', textAlign:'left', fontSize:'1.1rem', cursor:'pointer',
-                                        background: sel === i ? (shuffled[i] === q.options[q.correctIndex] ? 'var(--c-green)' : 'var(--c-red)') : 'transparent',
-                                        color: sel === i ? '#000' : 'var(--c-green)',
-                                        border: `1px solid ${sel === i ? 'transparent' : 'rgba(0,255,65,0.3)'}`,
-                                        fontWeight: 'bold'
-                                    }}
-                                >
-                                    {op}
-                                </button>
-                            ))}
+                        <div className="modal-body">
+                            <div style={{position: 'absolute', right: '2rem', top: '1.5rem', color: 'var(--c-blue)', fontSize: '0.6rem', opacity: 0.4}}>
+                                {Array(sector.questions.length).fill(0).map((_, i) => <span key={i} style={{marginLeft: '4px'}}>{i < idx ? '▣' : (i === idx ? '▶' : '□')}</span>)}
+                            </div>
+                            <div className="question-text">{q.question}</div>
+                            <div className="options-grid">
+                                {q.options.map((op, i) => (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => check(i)} 
+                                        disabled={sel !== null} 
+                                        className={`option-btn ${sel === i ? (i === q.correctIndex ? 'correct' : 'wrong') : ''}`}
+                                    >
+                                        <span style={{opacity: 0.3, marginRight: '10px'}}>{String.fromCharCode(65 + i)}//</span>
+                                        {op}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="modal-footer-stats">
+                            <span>SISTEMA: HYDRA_V5.6</span>
+                            <span>CAPA_RESEGURIDAD_{idx+1}/{sector.questions.length}</span>
                         </div>
                     </div>
                 </div>
