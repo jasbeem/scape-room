@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scape Room - Protocolo Hydra v5.6</title>
+    <title>Scape Room - Protocolo Hydra v5.7</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     
     <script src="./js/react.js"></script>
@@ -295,7 +295,12 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
         };
 
         function App() {
-            const [gameState, setGameState] = useState({ stage: 'selection', role: null, roomId: '', connectedSquads: [], finishedSquads: [], takenSquads: [], sectors: [], squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0 });
+            const [gameState, setGameState] = useState({ 
+                stage: 'selection', role: null, roomId: '', connectedSquads: [], 
+                finishedSquads: [], takenSquads: [], sectors: [], 
+                squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0,
+                squadProgress: {} // { 'Cobra': [1,3], 'Tigre': [2] }
+            });
             const stateRef = useRef(gameState);
             useEffect(() => { stateRef.current = gameState; }, [gameState]);
 
@@ -313,7 +318,16 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
 
             useEffect(() => { if (lockout > 0) { const t = setInterval(() => setLockout(l => l-1), 1000); return () => clearInterval(t); } }, [lockout]);
 
-            const reset = () => { if(peerRef.current) peerRef.current.destroy(); setGameState({ stage: 'selection', role: null, roomId: '', connectedSquads: [], finishedSquads: [], takenSquads: [], sectors: [], squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0 }); setVaultCodes(['','','','','']); };
+            const reset = () => { 
+                if(peerRef.current) peerRef.current.destroy(); 
+                setGameState({ 
+                    stage: 'selection', role: null, roomId: '', connectedSquads: [], 
+                    finishedSquads: [], takenSquads: [], sectors: [], 
+                    squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0,
+                    squadProgress: {}
+                }); 
+                setVaultCodes(['','','','','']); 
+            };
 
             const startAdmin = (fileOrText, isExample = false) => {
                 const initPeer = (questions) => {
@@ -338,6 +352,19 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                                     const nextFin = [...prevS.finishedSquads, {name:d.name, time}];
                                     c.send({type:'WIN_DATA', rank: nextFin.length, time});
                                     return {...prevS, finishedSquads: nextFin};
+                                });
+                            }
+                            if(d.type==='SECTOR_UPDATE') {
+                                setGameState(prevS => {
+                                    const current = prevS.squadProgress[d.name] || [];
+                                    if(current.includes(d.sectorId)) return prevS;
+                                    return {
+                                        ...prevS,
+                                        squadProgress: {
+                                            ...prevS.squadProgress,
+                                            [d.name]: [...current, d.sectorId]
+                                        }
+                                    };
                                 });
                             }
                         });
@@ -389,7 +416,7 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
 
                     {showRules && (
                         <div className="modal-overlay" onClick={() => setShowRules(false)}>
-                            <div className="cyber-border rules-modal-content" data-label="PROTOCOL_V5.6" onClick={e=>e.stopPropagation()}>
+                            <div className="cyber-border rules-modal-content" data-label="PROTOCOL_V5.7" onClick={e=>e.stopPropagation()}>
                                 <h2 className="title-huge" style={{fontSize: '2rem'}}>MANUAL DE OPERACIONES</h2>
                                 <div style={{lineHeight: '1.6', fontSize: '0.9rem', color: '#fff'}}>
                                     <p><strong>1. ACCESO:</strong> Un administrador crea el ID. Agentes usan matriz 6x5 para identificarse.</p>
@@ -502,7 +529,7 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                                 </div>
                             )}
                             <div className="main-panel">
-                                <div className="cyber-border" data-label="HUD_V5.6" style={{padding: '1.5rem'}}>
+                                <div className="cyber-border" data-label="HUD_V5.7" style={{padding: '1.5rem'}}>
                                     <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem'}}>
                                         <div style={{fontWeight: 900, color: 'var(--c-green)', fontSize: '1.8rem'}}>GENTE_{gameState.squadAnimal?.toUpperCase()}</div>
                                         <button onClick={() => setShowRules(true)} className="btn-cyber btn-outline" style={{padding:'0.5rem 1rem', fontSize:'0.7rem'}}>VER NORMAS</button>
@@ -528,7 +555,7 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                                 <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px'}}>{vaultCodes.map((v, i) => <input key={i} maxLength={2} value={v} onChange={e=>{ const n=[...vaultCodes]; n[i]=e.target.value; setVaultCodes(n); }} className="vault-input" />)}</div>
                                 <button onClick={() => { if(gameState.sectors.every((s,i) => vaultCodes[i] === s.accessCode)) { connRef.current.send({type:'FIN', name: gameState.squadAnimal}); } else { setLockout(10); } }} className="btn-cyber w-full" style={{marginTop: 'auto', height: '100px'}}>DETENER NÚCLEO</button>
                             </div>
-                            {activeSectorId && <SectorModal sector={gameState.sectors.find(s => s.id === activeSectorId)} onSolved={(id) => { setGameState(s => ({...s, sectors: s.sectors.map(x => x.id===id ? {...x, isSolved:true} : x)})); setActiveSectorId(null); }} onLock={() => { setLockout(10); setActiveSectorId(null); }} />}
+                            {activeSectorId && <SectorModal sector={gameState.sectors.find(s => s.id === activeSectorId)} onSolved={(id) => { setGameState(s => ({...s, sectors: s.sectors.map(x => x.id===id ? {...x, isSolved:true} : x)})); setActiveSectorId(null); connRef.current.send({type:'SECTOR_UPDATE', name: gameState.squadAnimal, sectorId: id}); }} onLock={() => { setLockout(10); setActiveSectorId(null); }} />}
                         </div>
                     )}
 
@@ -547,10 +574,30 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                             <div style={{width:'100%', display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}><h1>CENTRO_MONITOREO</h1><button onClick={handleTerminate} className="btn-cyber" style={{background:'var(--c-red)', color:'#fff'}}>TERMINAR GLOBAL</button></div>
                             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2rem', width:'100%', flex:1}}>
                                 <div className="cyber-border" data-label="TERMINAL_WINS">{gameState.finishedSquads.map((s,i) => (<div key={i} style={{display:'flex', justifyContent:'space-between', padding:'15px', borderBottom:'1px solid #333'}}><span>#{i+1} GENTE_{s.name.toUpperCase()}</span><span style={{color:'var(--c-gold)'}}>{formatTime(s.time)}</span></div>))}</div>
-                                <div className="cyber-border" data-label="IN_FIELD">
-                                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px'}}>{gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f=>f.name===s)).map(s => (
-                                        <div key={s} style={{padding:'10px', border:'1px solid var(--c-blue)'}}>{s}</div>
-                                    ))}</div>
+                                <div className="cyber-border" data-label="LIVE_PROGRESS">
+                                    <div style={{display:'grid', gridTemplateColumns:'1fr', gap:'10px'}}>
+                                        {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f=>f.name===s)).map(s => {
+                                            const prog = gameState.squadProgress[s] || [];
+                                            return (
+                                                <div key={s} style={{padding:'10px', border:'1px solid var(--c-blue)', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                                    <span style={{fontWeight:'bold'}}>{s}</span>
+                                                    <div style={{display:'flex', gap:'5px'}}>
+                                                        {[1,2,3,4,5].map(id => (
+                                                            <div key={id} style={{
+                                                                width:'20px', height:'20px',
+                                                                background: prog.includes(id) ? 'var(--c-green)' : '#111',
+                                                                border: '1px solid ' + (prog.includes(id) ? 'var(--c-green)' : '#333'),
+                                                                display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', color:'#000'
+                                                            }}>
+                                                                {prog.includes(id) ? '✓' : id}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f=>f.name===s)).length === 0 && <p style={{opacity:0.5, textAlign:'center'}}>NO HAY AGENTES ACTIVOS</p>}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -602,7 +649,7 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                             </div>
                         </div>
                         <div className="modal-footer-stats">
-                            <span>SISTEMA: HYDRA_V5.6</span>
+                            <span>SISTEMA: HYDRA_V5.7</span>
                             <span>CAPA_RESEGURIDAD_{idx+1}/{sector.questions.length}</span>
                         </div>
                     </div>
