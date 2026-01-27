@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scape Room - Protocolo Hydra v5.7</title>
+    <title>Scape Room - Protocolo Hydra v5.7 [MULTIPLAYER]</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     
     <script src="./js/react.js"></script>
@@ -42,11 +42,6 @@
             animation: moveBg 120s linear infinite;
         }
         @keyframes moveBg { from { background-position: 0 0; } to { background-position: 400px 400px; } }
-        .crt-scan {
-            position: fixed; inset: 0; z-index: 1001; pointer-events: none;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
-            background-size: 100% 3px, 3px 100%;
-        }
 
         /* --- UI COMPONENTS --- */
         .cyber-border {
@@ -465,6 +460,7 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                                 startTimeRef.current = Date.now();
                                 adminConns.current.forEach(c => {
                                     const shuffled = [...gameState.rawQuestions].sort(()=>Math.random()-.5);
+                                    // Logic to take random 20 if more exist (shuffled contains all, slice takes first 20 distributed across sectors)
                                     const sectors = [1,2,3,4,5].map(i => ({ id: i, questions: shuffled.slice((i-1)*4, i*4), accessCode: Math.floor(Math.random()*90+10).toString(), isSolved: false }));
                                     c.send({type:'GO', sectors});
                                 });
@@ -609,18 +605,37 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
         const SectorModal = ({ sector, onSolved, onLock }) => {
             const [idx, setIdx] = useState(0);
             const [sel, setSel] = useState(null);
+            const [shuffledOptions, setShuffledOptions] = useState([]);
             const q = sector.questions[idx];
 
-            const check = (i) => {
+            // Shuffle options whenever the question changes or modal re-renders (retry after lock)
+            useEffect(() => {
+                if (!q) return;
+                const opts = q.options.map((text, i) => ({
+                    text,
+                    isCorrect: i === q.correctIndex
+                }));
+                // Simple shuffle
+                setShuffledOptions(opts.sort(() => Math.random() - 0.5));
+            }, [idx, q]);
+
+            const check = (item, indexInShuffled) => {
                 if(sel !== null) return;
-                setSel(i);
+                setSel(indexInShuffled);
                 setTimeout(() => {
-                    if(i === q.correctIndex) {
-                        if(idx+1 < sector.questions.length) { setIdx(idx+1); setSel(null); }
+                    if(item.isCorrect) {
+                        if(idx+1 < sector.questions.length) { 
+                            setIdx(idx+1); 
+                            setSel(null); 
+                        }
                         else onSolved(sector.id);
-                    } else onLock();
+                    } else {
+                        onLock();
+                    }
                 }, 800);
             };
+
+            if (!q) return null;
 
             return (
                 <div className="modal-overlay">
@@ -635,15 +650,15 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                             </div>
                             <div className="question-text">{q.question}</div>
                             <div className="options-grid">
-                                {q.options.map((op, i) => (
+                                {shuffledOptions.map((item, i) => (
                                     <button 
                                         key={i} 
-                                        onClick={() => check(i)} 
+                                        onClick={() => check(item, i)} 
                                         disabled={sel !== null} 
-                                        className={`option-btn ${sel === i ? (i === q.correctIndex ? 'correct' : 'wrong') : ''}`}
+                                        className={`option-btn ${sel === i ? (item.isCorrect ? 'correct' : 'wrong') : ''}`}
                                     >
                                         <span style={{opacity: 0.3, marginRight: '10px'}}>{String.fromCharCode(65 + i)}//</span>
-                                        {op}
+                                        {item.text}
                                     </button>
                                 ))}
                             </div>
