@@ -313,27 +313,57 @@
             WIN: ["./audio/ganador01.mp3", "./audio/ganador02.mp3", "./audio/background.mp3"]
         };
 
-        const EXAMPLE_CSV = `Tipo;Pregunta;R1;R2;R3;R4;Tiempo;Correcta;URL Imagen
-quiz;¿Qué requiere la unión con cola?;Presión constante;Nada especial;Calor intenso;Tiempo de secado;30;4;
-quiz;¿Qué herramienta traza círculos o arcos?;Escuadra;Compás;Metro;Regla;30;2;
-quiz;¿Qué herramienta se usa para el acabado final?;Lija;Lima;Escofina;Martillo;30;1;
-quiz;¿Cuál es un ejemplo de madera dura?;Roble;Cedro;Pino;Abeto;30;1;
-quiz;¿De qué parte del árbol se obtiene principalmente?;Hojas;Tronco;Raíces;Corteza;30;2;
-quiz;¿Cómo se garantiza que sea renovable?;Gestión adecuada;Comprándola cara;Dejándola intacta;Usándola poco;30;1;
-quiz;¿Cuál es el orden correcto de trabajo?;Medir, construir, diseñar;Construir, medir, diseñar;Construir, diseñar, medir;Diseñar, medir, construir;30;4;
-quiz;¿Qué herramienta hace cortes curvos y finos?;Lima;Serrucho;Serrucho de costilla;Segueta;30;4;
-quiz;¿Cuál es el primer paso en el trabajo?;Medir;Cortar;Unir;Diseñar;30;4;
-quiz;¿Qué herramienta da mayor precisión en piezas pequeñas?;Compás;Escuadra;Metro;Regla;30;4;
-quiz;¿Qué relaciona la densidad?;Dureza y textura;Masa y volumen;Peso y tamaño;Color y olor;30;2;
-quiz;¿Cómo se fabrica el aglomerado?;Chapas finas pegadas;Madera maciza cortada;Fibras molidas;Virutas prensadas con cola;30;4;
-quiz;¿Qué hace que sea un recurso renovable?;Es artificial;No se gasta nunca;Reforestación;Se recicla fácil;30;3;
-quiz;¿Por qué se usan maderas procesadas?;Más duras siempre;Más bonitas;Más pesadas;Económicas y ecológicas;30;4;
-quiz;¿Qué maderas suelen ser más densas?;Las oscuras;Las jóvenes;Las claras;Las verdes;30;1;
-quiz;¿Qué herramienta hace cortes precisos con refuerzo?;Segueta;Serrucho de costilla;Lima;Serrucho común;30;2;
-quiz;¿Qué caracteriza a las maderas tropicales?;Climas cálidos, humedad;Crecimiento rápido, coníferas;Crecimiento lento, hoja caduca;Livianas, económicas;30;1;
-quiz;¿Qué técnica de unión es rápida y sencilla?;Clavos y martillo;Ensamblaje complejo;Cola;Tornillos;30;1;
-quiz;¿Qué es el contrachapado?;Fibras molidas;Madera maciza;Virutas prensadas;Chapas finas pegadas;30;4;
-quiz;¿Qué herramienta elimina mucha madera rápidamente?;Martillo;Lima;Escofina;Lija;30;3;`;
+        const EXAMPLE_CSV = `Categoría;SdA;Tipo;Pregunta;R1;R2;R3;R4;Tiempo;Correcta;URL Imagen
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta manual taladra agujeros pequeños?;Taladro eléctrico;Martillo;Brocas;Barrena;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué maderas suelen ser más densas?;Las jóvenes;Las oscuras;Las verdes;Las claras;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Cómo se clasifican las maderas naturales?;Secas y húmedas;Claras y oscuras;Livianas y pesadas;Duras y blandas;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué partes específicas tiene un taladro para madera?;Discos de corte;Brocas con punta guía;Lijas;Cuchillas;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué tipos de resistencia tiene alta la madera?;Acústica y óptica;Eléctrica y térmica;Tracción y compresión;Química y magnética;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué propiedad determina el peso y flotabilidad?;Dureza;Color;Textura;Densidad;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué caracteriza al aglomerado?;Muy caro;Superficie muy lisa;Muy resistente agua;Barato y sensible;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta traza círculos o arcos?;Metro;Compás;Regla;Escuadra;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta hace cortes precisos con refuerzo?;Serrucho de costilla;Segueta;Lima;Serrucho común;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿Cómo se fabrica el aglomerado?;Chapas finas pegadas;Fibras molidas;Virutas prensadas con cola;Madera maciza cortada;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Cuál es un ejemplo de madera tropical?;Caoba;Pino;Abeto;Roble;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿De qué parte del árbol se obtiene principalmente?;Tronco;Hojas;Raíces;Corteza;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta elimina mucha madera rápidamente?;Lima;Escofina;Martillo;Lija;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué es el MDF?;Madera Dura Fina;Madera De Forro;Madera Densamente Fina;Tablero de fibra;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta da mayor precisión en piezas pequeñas?;Metro;Escuadra;Regla;Compás;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta hace cortes curvos y finos?;Serrucho;Segueta;Serrucho de costilla;Lima;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué requiere la unión con cola?;Calor intenso;Presión constante;Tiempo de secado;Nada especial;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué caracteriza a las maderas duras?;Crecimiento rápido, coníferas;Crecimiento lento, hoja caduca;Climas cálidos, humedad;Livianas, económicas;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué tipo de material se encuentra directamente en la naturaleza?;Sintético;Artificial;Natural;Compuesto;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Por qué es vital sujetar bien la pieza?;Para gastar menos;Por comodidad;Para seguridad y precisión;Para trabajar más rápido;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Por qué se usan maderas procesadas?;Más pesadas;Económicas y ecológicas;Más duras siempre;Más bonitas;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Para qué es ideal el MDF?;Para pintar;Para exteriores;Para quemar;Para estructuras;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué es el contrachapado?;Chapas finas pegadas;Fibras molidas;Virutas prensadas;Madera maciza;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta sujeta piezas fijamente en la mesa?;Gato;Tornillo de banco;Martillo;Sargento;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta da un acabado más suave?;Serrucho;Lima;Escofina;Martillo;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta taladra rápido y es versátil?;Taladro eléctrico;Lima;Martillo;Barrena;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿Cuál es un ejemplo de madera blanda?;Haya;Roble;Nogal;Pino;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué caracteriza a las maderas tropicales?;Climas cálidos, humedad;Crecimiento rápido, coníferas;Livianas, económicas;Crecimiento lento, hoja caduca;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué relaciona la densidad?;Peso y tamaño;Masa y volumen;Dureza y textura;Color y olor;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué compuestos principales contiene?;Plástico y resina;Silicio y oxígeno;Hierro y carbono;Celulosa y lignina;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué caracteriza al contrachapado?;Estable y resistente;Sensible a humedad;Muy pesado;Poco resistente;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿Por qué es fundamental la precisión?;Por estética solo;Para trabajar lento;Para buen resultado;Para gastar más;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Cuál es un ejemplo de madera dura?;Abeto;Roble;Pino;Cedro;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramientas son móviles para sujetar?;Serrucho;Tornillo de banco;Martillo;Gatos o sargentos;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Cuál es el primer paso en el trabajo?;Cortar;Medir;Unir;Diseñar;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué caracteriza a las maderas blandas?;Crecimiento lento, hoja caduca;Climas cálidos, humedad;Resistentes, caras;Crecimiento rápido, coníferas;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué técnica da unión química permanente?;Clavos;Grapas;Tornillos;Cola blanca;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Cómo se garantiza que sea renovable?;Gestión adecuada;Dejándola intacta;Comprándola cara;Usándola poco;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta se usa para medidas largas?;Compás;Metro;Regla;Escuadra;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta hace cortes rectos en maderas gruesas?;Segueta;Lima;Serrucho;Escuadra;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta se usa para el acabado final?;Martillo;Lima;Lija;Escofina;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué herramienta traza ángulos de 90°?;Regla;Metro;Compás;Escuadra;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Cómo se clasifican los materiales según su origen?;Primarios, secundarios y terciarios;Naturales, artificiales y sintéticos;Sólidos, líquidos y gaseosos;Orgánicos, inorgánicos y compuestos;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Cuál es el orden correcto de trabajo?;Diseñar, medir, construir;Medir, construir, diseñar;Construir, medir, diseñar;Construir, diseñar, medir;30;1;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué es la resistencia mecánica?;El color;Capacidad de soportar fuerzas;La textura;El olor;30;2;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué técnica permite unión desmontable?;Soldadura;Clavos;Tornillos y destornillador;Cola;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué técnica de unión es rápida y sencilla?;Cola;Ensamblaje complejo;Clavos y martillo;Tornillos;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué hace que sea un recurso renovable?;No se gasta nunca;Se recicla fácil;Reforestación;Es artificial;30;3;
+Tecnología y Digitalización 2º;La madera;quiz;¿Dónde es mayor la resistencia?;En el centro;En las puntas;Contra la veta;En dirección de la veta;30;4;
+Tecnología y Digitalización 2º;La madera;quiz;¿Qué tipos de maderas procesadas existen?;Dura y blanda;Roble y pino;Aglomerado y contrachapado;Seco y verde;30;3;`;
 
         const formatTime = (ms) => {
             const totalSec = Math.floor(ms / 1000);
