@@ -547,6 +547,22 @@ Tecnología y Digitalización 2º;La madera;quiz;¿Qué tipos de maderas procesa
                 initAdminPeer(final);
             };
 
+            // LOGIC TO GET EXACTLY 20 QUESTIONS
+            const getGameQuestions = (pool) => {
+                let selected = [];
+                if (pool.length >= 20) {
+                    selected = [...pool].sort(() => Math.random() - 0.5).slice(0, 20);
+                } else {
+                    selected = [...pool];
+                    while (selected.length < 20) {
+                        const randomQ = pool[Math.floor(Math.random() * pool.length)];
+                        selected.push({...randomQ}); 
+                    }
+                    selected.sort(() => Math.random() - 0.5);
+                }
+                return selected;
+            };
+
             const initAdminPeer = (finalQuestions) => {
                 const id = Math.floor(10000 + Math.random() * 90000).toString();
                 const peer = new Peer(`sr-host-${id}`);
@@ -555,18 +571,33 @@ Tecnología y Digitalización 2º;La madera;quiz;¿Qué tipos de maderas procesa
                     // We don't send SYNC immediately anymore, we wait for REQ
                     c.on('data', d => {
                         if(d.type==='REQ') {
+                            const cur = stateRef.current;
+                            // Check if Nickname is already taken
+                            if(cur.connectedSquads.includes(d.nick)) { 
+                                c.send({type:'NO'}); 
+                                return; 
+                            }
+                            c.send({type:'OK'});
+                            
                             setGameState(prevS => {
-                                // Check if Nickname is already taken
-                                if(prevS.connectedSquads.includes(d.nick)) { 
-                                    c.send({type:'NO'}); 
-                                    return prevS; 
-                                }
-                                c.send({type:'OK'});
                                 const nextS = [...prevS.connectedSquads, d.nick];
                                 // Map Nick -> Avatar
                                 const nextAvatars = { ...prevS.playerAvatars, [d.nick]: d.avatar };
                                 return {...prevS, connectedSquads: nextS, playerAvatars: nextAvatars};
                             });
+
+                            // --- NEW LOGIC FOR LATE JOINERS ---
+                            if (cur.stage === 'admin-monitor') {
+                                // If game is running, generate specific sectors for this late player and send GO immediately
+                                const gameQuestions = getGameQuestions(cur.filteredQuestions);
+                                const sectors = [1,2,3,4,5].map(i => ({ 
+                                    id: i, 
+                                    questions: gameQuestions.slice((i-1)*4, i*4), 
+                                    accessCode: Math.floor(Math.random()*90+10).toString(), 
+                                    isSolved: false 
+                                }));
+                                c.send({type:'GO', sectors});
+                            }
                         }
                         if(d.type==='FIN') {
                             const time = Date.now() - startTimeRef.current;
@@ -625,22 +656,6 @@ Tecnología y Digitalización 2º;La madera;quiz;¿Qué tipos de maderas procesa
             };
 
             const handleTerminate = () => { adminConns.current.forEach(c => { if(c.open) c.send({type:'RESET'}); }); reset(); setGameState(s => ({...s, stage: 'admin-setup', role: 'admin'})); };
-
-            // LOGIC TO GET EXACTLY 20 QUESTIONS
-            const getGameQuestions = (pool) => {
-                let selected = [];
-                if (pool.length >= 20) {
-                    selected = [...pool].sort(() => Math.random() - 0.5).slice(0, 20);
-                } else {
-                    selected = [...pool];
-                    while (selected.length < 20) {
-                        const randomQ = pool[Math.floor(Math.random() * pool.length)];
-                        selected.push({...randomQ}); 
-                    }
-                    selected.sort(() => Math.random() - 0.5);
-                }
-                return selected;
-            };
 
             const getSquadIcon = (name) => SQUADS.find(s => s.name === name)?.icon || '❓';
 
@@ -874,6 +889,9 @@ Tecnología y Digitalización 2º;La madera;quiz;¿Qué tipos de maderas procesa
                                     <h1 style={{margin:0}}>CENTRO_MONITOREO</h1>
                                     <div style={{fontSize:'0.8rem', color:'var(--c-blue)', marginTop:'5px'}}>
                                         ASIGNATURA: {gameState.selectedSubject} | SITUACIÓN: {gameState.selectedTopic}
+                                    </div>
+                                    <div style={{fontSize:'1.2rem', color:'var(--c-green)', fontWeight:'bold', marginTop:'5px', border:'1px dashed var(--c-green)', padding:'5px 10px', display:'inline-block'}}>
+                                        ID MISION: {gameState.roomId}
                                     </div>
                                 </div>
                                 <button onClick={handleTerminate} className="btn-cyber" style={{background:'var(--c-red)', color:'#fff'}}>TERMINAR GLOBAL</button>
