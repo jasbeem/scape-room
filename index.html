@@ -74,11 +74,19 @@
         .btn-outline { background: transparent; border: 1px solid var(--c-blue); color: var(--c-blue); box-shadow: none; }
         .btn-outline:hover { background: rgba(0, 243, 255, 0.1); color: var(--c-blue); }
 
+        .btn-subtle {
+            background: transparent; border: 1px solid #333; color: #666; 
+            padding: 0.5rem 1rem; font-size: 0.8rem; cursor: pointer; transition: 0.2s;
+            font-family: var(--font-main); text-transform: uppercase;
+        }
+        .btn-subtle:hover { border-color: var(--c-blue); color: var(--c-blue); }
+
         .input-cyber {
             width: 100%; background: #000; border: 2px solid var(--c-blue);
             padding: 1rem; color: #fff; font-family: var(--font-main); font-size: 1.5rem;
             text-align: center; outline: none; margin-bottom: 1rem;
         }
+        .input-cyber::placeholder { color: rgba(0, 243, 255, 0.3); }
 
         /* --- AUDIO PLAYER (ADMIN ONLY) --- */
         .audio-player-admin {
@@ -95,34 +103,102 @@
         .audio-ctrl-btn:hover { color: #fff; text-shadow: 0 0 10px var(--c-blue); transform: scale(1.1); }
         .volume-slider { cursor: pointer; accent-color: var(--c-blue); width: 80px; }
 
-        /* --- SQUAD SELECTION MATRIX 6x5 --- */
-        .squad-grid-6x5 {
+        /* --- SQUAD SELECTION MATRIX --- */
+        .squad-grid-scroll {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            grid-template-rows: repeat(5, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             gap: 0.5rem; padding: 1rem;
-            max-width: 850px; margin: 0 auto;
+            max-height: 200px; overflow-y: auto;
+            border: 1px solid #333; background: rgba(0,0,0,0.5);
+            margin-bottom: 1rem;
         }
         .squad-card {
             background: rgba(0,0,0,0.8); border: 1px solid rgba(0, 255, 65, 0.2);
             padding: 0.5rem; cursor: pointer; text-align: center; transition: 0.3s;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 85px; position: relative;
+            min-height: 70px; position: relative;
         }
         .squad-card:hover:not(:disabled) { border-color: var(--c-blue); transform: translateY(-3px); background: rgba(0, 243, 255, 0.05); }
         .squad-card.selected { border-color: var(--c-blue); box-shadow: 0 0 15px var(--c-blue); background: rgba(0, 243, 255, 0.1); }
         .squad-card:disabled { 
-            opacity: 0.1; 
-            cursor: not-allowed !important; 
-            filter: grayscale(1) brightness(0.3); 
-            border-color: #111;
-            background: #050505;
+            opacity: 0.1; cursor: not-allowed !important; filter: grayscale(1) brightness(0.3); border-color: #111; background: #050505;
         }
-        .squad-card:disabled::after {
-            content: "BLOCKED"; position: absolute; bottom: 5px; font-size: 7px; color: var(--c-red); letter-spacing: 1px;
-        }
-        .squad-icon { font-size: 2rem; display: block; }
+        .squad-icon { font-size: 1.5rem; display: block; }
         .squad-name { font-size: 0.55rem; font-weight: bold; letter-spacing: 1px; color: var(--c-green); text-transform: uppercase; margin-top: 4px; }
+
+        /* --- SELECTION GRIDS (ADMIN) --- */
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* Default 3 cols for 9 items */
+            gap: 1rem;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        /* Special grid for 15 items - 3 cols x 5 rows */
+        .selection-grid.large {
+            grid-template-columns: repeat(3, 1fr); 
+        }
+        @media (min-width: 800px) {
+            .selection-grid.large { grid-template-columns: repeat(5, 1fr); }
+        }
+
+        .btn-select-grid {
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid var(--c-blue);
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            min-height: 80px;
+            text-transform: uppercase;
+            word-break: break-word;
+        }
+        .btn-select-grid:hover:not(.btn-empty) {
+            background: rgba(0, 243, 255, 0.15);
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+        .btn-empty {
+            background: transparent;
+            border: 1px dashed #333;
+            color: #333;
+            cursor: default;
+            box-shadow: none;
+            pointer-events: none;
+        }
+
+        /* --- BIG AVATAR DISPLAY --- */
+        .big-avatar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            animation: pulseAnim 3s infinite;
+        }
+        .big-avatar-icon {
+            font-size: 6rem;
+            filter: drop-shadow(0 0 20px var(--c-green));
+            margin-bottom: 1rem;
+        }
+        .big-avatar-name {
+            font-size: 2rem;
+            color: var(--c-green);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        .big-avatar-sub {
+            font-size: 1rem;
+            color: var(--c-blue);
+            text-transform: uppercase;
+        }
 
         /* --- GAME LAYOUT --- */
         .game-layout { display: flex; height: 100vh; width: 100vw; }
@@ -190,6 +266,14 @@
         .rules-modal-content {
             max-width: 600px; width: 100%;
         }
+
+        /* Discreete Admin Bar */
+        .discreet-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            padding: 1rem; display: flex; justify-content: center; gap: 1rem;
+            opacity: 0.6; transition: 0.3s;
+        }
+        .discreet-bar:hover { opacity: 1; }
     </style>
 
 <script type="importmap">
@@ -230,26 +314,26 @@
         };
 
         const EXAMPLE_CSV = `Tipo;Pregunta;R1;R2;R3;R4;Tiempo;Correcta;URL Imagen
-quiz;¿Para qué se utiliza comúnmente la IA en gestión de redes?;Generar IP;Optimizar tráfico;Instalar conectores;Fabricar cables;45;2;
-quiz;¿Qué describe la automatización de sistemas en el hogar?;IoT Industrial;Domótica;Ciberseguridad;Robótica;45;2;
-quiz;¿Qué banda WiFi tiene mayor alcance?;2.4 GHz;900 MHz;6 GHz;5 GHz;45;1;
-quiz;¿Qué banda WiFi es más rápida y menos congestionada?;900 MHz;5 GHz;10 GHz;2.4 GHz;45;2;
-quiz;¿Cuál es el beneficio principal del PLC?;Eliminar router;Usar cable eléctrico existente;Conexión segura;Máxima velocidad;45;2;
-quiz;¿En qué capa TCP/IP opera HTTP?;Transporte;Acceso a Red;Internet;Aplicación;45;4;
-quiz;¿Qué característica permite redirigir tráfico en WiFi Mesh?;Autoreparación;WPA3;Roaming fluido;Conmutación;45;1;
-quiz;¿Qué es clave en una red WiFi Mesh?;Servidor de impresión;Cable UTP;Un punto central;Roaming automático;45;4;
-quiz;¿Qué NO es ventaja de redes cableadas?;Menor latencia;Mayor seguridad;Libertad de movimiento;Mayor fiabilidad;45;3;
-quiz;¿Qué categoría de cable UTP soporta 1 Gbps?;Cat 5e;Cat 7;Cat 3;Cat 6;45;1;
-quiz;¿Qué hardware necesita un PC para comunicarse en red?;Router;CPU;Fuente;Adaptador de red;45;4;
-quiz;¿Qué término describe dispositivos físicos conectados a Internet?;IoT;Big Data;Fog Computing;LAN;45;1;
-quiz;¿Qué conector se usa para UTP en Ethernet?;USB-C;HDMI;RJ11;RJ45;45;4;
-quiz;¿Uno de los desafíos del Deep Learning y Big Data es?;Coste de fibra;Incompatibilidad Bluetooth;Problemas de privacidad;Velocidad baja PLC;45;3;
-quiz;¿Diferencia entre switch y hub?;Hub es inalámbrico;Hub es más rápido;Switch dirige a destino;Switch tiene un puerto;45;3;
-quiz;¿Qué dispositivo retransmite datos a todos los puertos?;Hub;Router;Punto de acceso;Switch;45;1;
-quiz;¿Qué dispositivo traduce entre redes con protocolos diferentes?;Gateway;Repetidor;Puente;Switch;45;1;
-quiz;¿Qué dispositivo amplifica señal WiFi?;Puente;Servidor impresión;Repetidor WiFi;Switch;45;3;
-quiz;¿Qué dispositivo interconecta equipos en una LAN?;Puente;Repetidor;Router;Switch;45;4;
-quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetidor;Hub;Bridge;45;4;`;
+quiz;¿Qué requiere la unión con cola?;Presión constante;Nada especial;Calor intenso;Tiempo de secado;30;4;
+quiz;¿Qué herramienta traza círculos o arcos?;Escuadra;Compás;Metro;Regla;30;2;
+quiz;¿Qué herramienta se usa para el acabado final?;Lija;Lima;Escofina;Martillo;30;1;
+quiz;¿Cuál es un ejemplo de madera dura?;Roble;Cedro;Pino;Abeto;30;1;
+quiz;¿De qué parte del árbol se obtiene principalmente?;Hojas;Tronco;Raíces;Corteza;30;2;
+quiz;¿Cómo se garantiza que sea renovable?;Gestión adecuada;Comprándola cara;Dejándola intacta;Usándola poco;30;1;
+quiz;¿Cuál es el orden correcto de trabajo?;Medir, construir, diseñar;Construir, medir, diseñar;Construir, diseñar, medir;Diseñar, medir, construir;30;4;
+quiz;¿Qué herramienta hace cortes curvos y finos?;Lima;Serrucho;Serrucho de costilla;Segueta;30;4;
+quiz;¿Cuál es el primer paso en el trabajo?;Medir;Cortar;Unir;Diseñar;30;4;
+quiz;¿Qué herramienta da mayor precisión en piezas pequeñas?;Compás;Escuadra;Metro;Regla;30;4;
+quiz;¿Qué relaciona la densidad?;Dureza y textura;Masa y volumen;Peso y tamaño;Color y olor;30;2;
+quiz;¿Cómo se fabrica el aglomerado?;Chapas finas pegadas;Madera maciza cortada;Fibras molidas;Virutas prensadas con cola;30;4;
+quiz;¿Qué hace que sea un recurso renovable?;Es artificial;No se gasta nunca;Reforestación;Se recicla fácil;30;3;
+quiz;¿Por qué se usan maderas procesadas?;Más duras siempre;Más bonitas;Más pesadas;Económicas y ecológicas;30;4;
+quiz;¿Qué maderas suelen ser más densas?;Las oscuras;Las jóvenes;Las claras;Las verdes;30;1;
+quiz;¿Qué herramienta hace cortes precisos con refuerzo?;Segueta;Serrucho de costilla;Lima;Serrucho común;30;2;
+quiz;¿Qué caracteriza a las maderas tropicales?;Climas cálidos, humedad;Crecimiento rápido, coníferas;Crecimiento lento, hoja caduca;Livianas, económicas;30;1;
+quiz;¿Qué técnica de unión es rápida y sencilla?;Clavos y martillo;Ensamblaje complejo;Cola;Tornillos;30;1;
+quiz;¿Qué es el contrachapado?;Fibras molidas;Madera maciza;Virutas prensadas;Chapas finas pegadas;30;4;
+quiz;¿Qué herramienta elimina mucha madera rápidamente?;Martillo;Lima;Escofina;Lija;30;3;`;
 
         const formatTime = (ms) => {
             const totalSec = Math.floor(ms / 1000);
@@ -291,10 +375,24 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
 
         function App() {
             const [gameState, setGameState] = useState({ 
-                stage: 'selection', role: null, roomId: '', connectedSquads: [], 
-                finishedSquads: [], takenSquads: [], sectors: [], 
-                squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0,
-                squadProgress: {} // { 'Cobra': [1,3], 'Tigre': [2] }
+                stage: 'selection', role: null, roomId: '', 
+                // connectedSquads now holds Player Nicknames (strings)
+                connectedSquads: [], 
+                finishedSquads: [], 
+                takenSquads: [], // Unused in new logic but kept for safety
+                sectors: [], 
+                squadAnimal: null, // Selected Animal (ID)
+                squadNick: '', // Unqiue ID
+                isSquadSelecting: false, finalRank: 0, finalTime: 0,
+                squadProgress: {}, // Map Nickname -> Progress
+                // Admin Setup Vars
+                rawQuestions: [],
+                allSubjects: [],
+                allTopics: [],
+                filteredQuestions: [],
+                selectedSubject: '',
+                selectedTopic: '',
+                playerAvatars: {} // Map Nickname -> AnimalName
             });
             const stateRef = useRef(gameState);
             useEffect(() => { stateRef.current = gameState; }, [gameState]);
@@ -303,6 +401,10 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
             const [lockout, setLockout] = useState(0);
             const [activeSectorId, setActiveSectorId] = useState(null);
             const [showRules, setShowRules] = useState(false);
+            // Temp state for pre-connection selection
+            const [tempSquad, setTempSquad] = useState(null);
+            const [tempNick, setTempNick] = useState('');
+            const [tempRoomId, setTempRoomId] = useState('');
             
             const peerRef = useRef(null);
             const connRef = useRef(null);
@@ -318,85 +420,199 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                 setGameState({ 
                     stage: 'selection', role: null, roomId: '', connectedSquads: [], 
                     finishedSquads: [], takenSquads: [], sectors: [], 
-                    squadAnimal: null, isSquadSelecting: false, finalRank: 0, finalTime: 0,
-                    squadProgress: {}
+                    squadAnimal: null, squadNick: '', isSquadSelecting: false, finalRank: 0, finalTime: 0,
+                    squadProgress: {}, rawQuestions: [], allSubjects: [], allTopics: [], filteredQuestions: [],
+                    selectedSubject: '', selectedTopic: '', playerAvatars: {}
                 }); 
                 setVaultCodes(['','','','','']); 
-            };
-
-            const startAdmin = (fileOrText, isExample = false) => {
-                const initPeer = (questions) => {
-                    const id = Math.floor(10000 + Math.random() * 90000).toString();
-                    const peer = new Peer(`sr-host-${id}`);
-                    peer.on('open', () => setGameState(s => ({...s, role: 'admin', stage: 'admin-lobby', roomId: id, rawQuestions: questions})));
-                    peer.on('connection', c => {
-                        c.on('open', () => { adminConns.current.push(c); c.send({type:'SYNC', taken: stateRef.current.connectedSquads}); });
-                        c.on('data', d => {
-                            if(d.type==='REQ') {
-                                setGameState(prevS => {
-                                    if(prevS.connectedSquads.includes(d.name)) { c.send({type:'NO'}); return prevS; }
-                                    c.send({type:'OK'});
-                                    const nextS = [...prevS.connectedSquads, d.name];
-                                    adminConns.current.forEach(ac => { if (ac.open) ac.send({type:'SYNC', taken: nextS}); });
-                                    return {...prevS, connectedSquads: nextS};
-                                });
-                            }
-                            if(d.type==='FIN') {
-                                const time = Date.now() - startTimeRef.current;
-                                setGameState(prevS => {
-                                    const nextFin = [...prevS.finishedSquads, {name:d.name, time}];
-                                    c.send({type:'WIN_DATA', rank: nextFin.length, time});
-                                    return {...prevS, finishedSquads: nextFin};
-                                });
-                            }
-                            if(d.type==='SECTOR_UPDATE') {
-                                setGameState(prevS => {
-                                    const current = prevS.squadProgress[d.name] || [];
-                                    if(current.includes(d.sectorId)) return prevS;
-                                    return {
-                                        ...prevS,
-                                        squadProgress: {
-                                            ...prevS.squadProgress,
-                                            [d.name]: [...current, d.sectorId]
-                                        }
-                                    };
-                                });
-                            }
-                        });
-                    });
-                    peerRef.current = peer;
-                };
-                if (isExample) initPeer(processCSV(EXAMPLE_CSV));
-                else if (fileOrText) { const r = new FileReader(); r.onload = (e) => initPeer(processCSV(e.target.result)); r.readAsText(fileOrText); }
-            };
-
-            const joinRoom = (rid) => {
-                if(!rid) return;
-                const peer = new Peer();
-                peer.on('open', () => {
-                    const c = peer.connect(`sr-host-${rid}`);
-                    c.on('open', () => { connRef.current = c; setGameState(s => ({...s, role: 'squad'})); });
-                    c.on('data', d => {
-                        if(d.type==='SYNC') setGameState(s => ({...s, takenSquads: d.taken, stage: s.stage === 'selection' ? 'squad-selection' : s.stage}));
-                        if(d.type==='OK') setGameState(s => ({...s, stage: 'squad-lobby'}));
-                        if(d.type==='NO') { alert("Avatar no disponible"); setGameState(s => ({...s, isSquadSelecting: false})); }
-                        if(d.type==='GO') setGameState(s => ({...s, stage: 'squad-intro', sectors: d.sectors}));
-                        if(d.type==='WIN_DATA') setGameState(s => ({...s, stage: 'squad-win', finalRank: d.rank, finalTime: d.time}));
-                        if(d.type==='RESET') reset();
-                    });
-                });
-                peerRef.current = peer;
+                setTempSquad(null);
+                setTempNick('');
+                setTempRoomId('');
             };
 
             const processCSV = (text) => {
                 const lines = text.trim().split('\n');
+                if (lines.length < 2) return [];
+
+                // Detect format
+                const header = lines[0].toLowerCase();
+                const isShortFormat = header.startsWith('tipo');
+
                 return lines.slice(1).map((l, i) => {
+                    const trimmed = l.trim();
+                    if (!trimmed || trimmed.startsWith('#')) return null;
+                    
                     const p = l.split(';').map(x => x.trim().replace(/^"|"$/g, ''));
-                    return { id: i, question: p[1], options: [p[2],p[3],p[4],p[5]], correctIndex: (parseInt(p[7])||1)-1 };
-                }).filter(q => q.question);
+                    
+                    let subject, topic, question, options, correctIndex;
+
+                    if (isShortFormat) {
+                        // MAPPING FOR SHORT FORMAT: Tipo;Pregunta;R1;R2;R3;R4;Tiempo;Correcta;URL
+                        if (p.length < 8) return null;
+                        subject = 'General';
+                        topic = 'Misión';
+                        question = p[1];
+                        options = [p[2], p[3], p[4], p[5]];
+                        correctIndex = (parseInt(p[7])||1)-1; 
+                    } else {
+                        // MAPPING FOR FULL FORMAT: Category;Topic;Type;Question;R1...
+                        if (p.length < 10) return null; 
+                        subject = p[0] || 'General';
+                        topic = p[1] || 'General';
+                        question = p[3];
+                        options = [p[4],p[5],p[6],p[7]];
+                        correctIndex = (parseInt(p[9])||1)-1; 
+                    }
+
+                    return { 
+                        id: i, 
+                        question: question, 
+                        options: options, 
+                        correctIndex: correctIndex,
+                        category: subject,
+                        topic: topic
+                    };
+                }).filter(q => q && q.question);
+            };
+
+            const handleFileLoad = (fileOrText, isExample) => {
+                let questions = [];
+                const finishLoad = (qList) => {
+                    if(!qList || qList.length === 0) { alert('No se encontraron preguntas válidas'); return; }
+                    const subjects = [...new Set(qList.map(q => q.category))];
+                    
+                    if (subjects.length > 1) {
+                         setGameState(s => ({...s, role: 'admin', stage: 'admin-select-subject', rawQuestions: qList, allSubjects: subjects}));
+                    } else {
+                         selectSubject(qList, subjects[0]);
+                    }
+                };
+
+                if (isExample) {
+                    finishLoad(processCSV(EXAMPLE_CSV));
+                } else if (fileOrText) {
+                    const r = new FileReader(); 
+                    r.onload = (e) => finishLoad(processCSV(e.target.result)); 
+                    r.readAsText(fileOrText);
+                }
+            };
+
+            const selectSubject = (allQs, subject) => {
+                const bySubj = allQs.filter(q => q.category === subject);
+                const topics = [...new Set(bySubj.map(q => q.topic))];
+                setGameState(s => ({...s, selectedSubject: subject}));
+
+                if(topics.length > 1) {
+                    setGameState(s => ({...s, role: 'admin', stage: 'admin-select-topic', rawQuestions: allQs, filteredQuestions: bySubj, allTopics: topics}));
+                } else {
+                    // Only one topic or none, use the subject list directly
+                    setGameState(s => ({...s, selectedTopic: topics[0] || 'General'}));
+                    initAdminPeer(bySubj); 
+                }
+            };
+
+            const selectTopic = (topic) => {
+                const final = gameState.filteredQuestions.filter(q => q.topic === topic);
+                setGameState(s => ({...s, selectedTopic: topic}));
+                initAdminPeer(final);
+            };
+
+            const initAdminPeer = (finalQuestions) => {
+                const id = Math.floor(10000 + Math.random() * 90000).toString();
+                const peer = new Peer(`sr-host-${id}`);
+                peer.on('open', () => setGameState(s => ({...s, role: 'admin', stage: 'admin-lobby', roomId: id, filteredQuestions: finalQuestions})));
+                peer.on('connection', c => {
+                    // We don't send SYNC immediately anymore, we wait for REQ
+                    c.on('data', d => {
+                        if(d.type==='REQ') {
+                            setGameState(prevS => {
+                                // Check if Nickname is already taken
+                                if(prevS.connectedSquads.includes(d.nick)) { 
+                                    c.send({type:'NO'}); 
+                                    return prevS; 
+                                }
+                                c.send({type:'OK'});
+                                const nextS = [...prevS.connectedSquads, d.nick];
+                                // Map Nick -> Avatar
+                                const nextAvatars = { ...prevS.playerAvatars, [d.nick]: d.avatar };
+                                return {...prevS, connectedSquads: nextS, playerAvatars: nextAvatars};
+                            });
+                        }
+                        if(d.type==='FIN') {
+                            const time = Date.now() - startTimeRef.current;
+                            setGameState(prevS => {
+                                // d.name here is the Nickname
+                                const nextFin = [...prevS.finishedSquads, {name:d.name, time}];
+                                c.send({type:'WIN_DATA', rank: nextFin.length, time});
+                                return {...prevS, finishedSquads: nextFin};
+                            });
+                        }
+                        if(d.type==='SECTOR_UPDATE') {
+                            setGameState(prevS => {
+                                // d.name is the Nickname
+                                const current = prevS.squadProgress[d.name] || [];
+                                if(current.includes(d.sectorId)) return prevS;
+                                return { ...prevS, squadProgress: { ...prevS.squadProgress, [d.name]: [...current, d.sectorId] } };
+                            });
+                        }
+                    });
+                    c.on('open', () => adminConns.current.push(c));
+                });
+                peerRef.current = peer;
+            };
+
+            const joinRoom = (rid, selectedSquadName, selectedNick) => {
+                if(!rid || !selectedSquadName || !selectedNick) {
+                    alert("Por favor completa todos los campos (Nombre, Avatar y Código).");
+                    return;
+                }
+                const peer = new Peer();
+                peer.on('open', () => {
+                    const c = peer.connect(`sr-host-${rid}`);
+                    c.on('open', () => { 
+                        connRef.current = c; 
+                        // Request entry with Nickname and Avatar
+                        c.send({type:'REQ', name: selectedSquadName, nick: selectedNick, avatar: selectedSquadName});
+                    });
+                    c.on('data', d => {
+                        if(d.type==='OK') {
+                            setGameState(s => ({...s, role: 'squad', squadAnimal: selectedSquadName, squadNick: selectedNick, stage: 'squad-lobby'}));
+                        }
+                        if(d.type==='NO') { 
+                            alert(`El nombre "${selectedNick}" ya está en uso en esta misión. Elige otro.`); 
+                            c.close();
+                        }
+                        if(d.type==='GO') setGameState(s => ({...s, stage: 'squad-intro', sectors: d.sectors}));
+                        if(d.type==='WIN_DATA') setGameState(s => ({...s, stage: 'squad-win', finalRank: d.rank, finalTime: d.time}));
+                        if(d.type==='RESET') reset();
+                    });
+                    
+                    setTimeout(() => {
+                        if(!c.open) alert("No se pudo conectar con la misión. Verifica el ID.");
+                    }, 3000);
+                });
+                peerRef.current = peer;
             };
 
             const handleTerminate = () => { adminConns.current.forEach(c => { if(c.open) c.send({type:'RESET'}); }); reset(); setGameState(s => ({...s, stage: 'admin-setup', role: 'admin'})); };
+
+            // LOGIC TO GET EXACTLY 20 QUESTIONS
+            const getGameQuestions = (pool) => {
+                let selected = [];
+                if (pool.length >= 20) {
+                    selected = [...pool].sort(() => Math.random() - 0.5).slice(0, 20);
+                } else {
+                    selected = [...pool];
+                    while (selected.length < 20) {
+                        const randomQ = pool[Math.floor(Math.random() * pool.length)];
+                        selected.push({...randomQ}); 
+                    }
+                    selected.sort(() => Math.random() - 0.5);
+                }
+                return selected;
+            };
+
+            const getSquadIcon = (name) => SQUADS.find(s => s.name === name)?.icon || '❓';
 
             return (
                 <div>
@@ -427,28 +643,90 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
 
                     {gameState.stage === 'selection' && (
                         <div className="screen">
-                            <h1 className="title-huge">SCAPE ROOM</h1>
-                            <div className="cyber-border" data-label="USER_LOGIN" style={{maxWidth: '400px', width: '100%'}}>
-                                <input id="rid" type="text" placeholder="ID MISIÓN" maxLength={5} className="input-cyber" />
-                                <button onClick={() => joinRoom(document.getElementById('rid').value)} className="btn-cyber w-full mb-4">INGRESAR AL SISTEMA</button>
-                                <div className="flex-row" style={{display:'flex', gap:'10px'}}>
-                                    <button onClick={() => setShowRules(true)} className="btn-cyber btn-outline flex-1">NORMAS</button>
-                                    <button onClick={() => setGameState(s => ({...s, stage: 'admin-setup'}))} className="btn-cyber btn-outline flex-1">MODO ADMIN</button>
+                            <h1 className="title-huge" style={{marginBottom:'0.5rem'}}>SCAPE ROOM</h1>
+                            <div className="cyber-border" data-label="PLAYER_LOGIN" style={{maxWidth: '500px', width: '100%', padding:'2rem', position:'relative', zIndex:10}}>
+                                
+                                <div style={{marginBottom:'1rem'}}>
+                                    <label style={{display:'block', marginBottom:'5px', color:'var(--c-blue)', fontSize:'0.8rem'}}>1. NOMBRE AGENTE</label>
+                                    <input value={tempNick} onChange={e=>setTempNick(e.target.value.toUpperCase())} type="text" placeholder="AGENTE_01" maxLength={20} className="input-cyber" style={{margin:0}} />
                                 </div>
+
+                                <div style={{marginBottom:'1.5rem'}}>
+                                    <label style={{display:'block', marginBottom:'5px', color:'var(--c-blue)', fontSize:'0.8rem'}}>2. SELECCIONAR AVATAR</label>
+                                    <div className="squad-grid-scroll">
+                                        {SQUADS.map(s => (
+                                            <div key={s.name} 
+                                                 onClick={() => setTempSquad(s.name)} 
+                                                 className={`squad-card ${tempSquad === s.name ? 'selected' : ''}`}>
+                                                <span className="squad-icon">{s.icon}</span>
+                                                <span className="squad-name">{s.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {tempSquad && <div style={{textAlign:'center', color:'var(--c-green)', fontWeight:'bold'}}>AVATAR: {tempSquad} SELECCIONADO</div>}
+                                </div>
+
+                                <div style={{marginBottom:'1.5rem'}}>
+                                    <label style={{display:'block', marginBottom:'5px', color:'var(--c-blue)', fontSize:'0.8rem'}}>3. CÓDIGO MISIÓN</label>
+                                    <input value={tempRoomId} onChange={e=>setTempRoomId(e.target.value)} type="text" placeholder="#####" maxLength={5} className="input-cyber" style={{margin:0}} />
+                                </div>
+
+                                <button onClick={() => joinRoom(tempRoomId, tempSquad, tempNick)} className="btn-cyber w-full">CONECTAR SISTEMA</button>
+                            </div>
+
+                            {/* HIDDEN FILE INPUT FOR ADMIN */}
+                            <input id="csvIn" type="file" accept=".csv" style={{display:'none'}} onChange={(e) => handleFileLoad(e.target.files[0])} />
+
+                            <div className="discreet-bar">
+                                <button onClick={() => document.getElementById('csvIn').click()} className="btn-subtle">CREAR MISIÓN</button>
+                                <button onClick={() => handleFileLoad(null, true)} className="btn-subtle">CARGAR EJEMPLO</button>
+                                <button onClick={downloadCSV} className="btn-subtle">PLANTILLA</button>
+                                <button onClick={() => setShowRules(true)} className="btn-subtle">NORMAS</button>
                             </div>
                         </div>
                     )}
 
-                    {gameState.stage === 'admin-setup' && (
+                    {gameState.stage === 'admin-select-subject' && (
                         <div className="screen">
-                            <div className="cyber-border flex-col" data-label="SCENARIO_LOADER" style={{maxWidth: '450px', width: '100%'}}>
-                                <h2 className="text-center mb-4">PROTOCOLO DE CARGA</h2>
-                                <input id="csvIn" type="file" accept=".csv" className="mb-4 w-full" />
-                                <button onClick={() => startAdmin(document.getElementById('csvIn').files[0])} className="btn-cyber w-full mb-2">LANZAR MISIÓN</button>
-                                <button onClick={() => startAdmin(null, true)} className="btn-cyber btn-outline w-full mb-2">CARGAR EJEMPLO</button>
-                                <button onClick={downloadCSV} className="btn-cyber btn-outline w-full mb-4" style={{borderColor:'var(--c-gold)', color:'var(--c-gold)', fontSize:'0.75rem'}}>DESCARGAR PLANTILLA CSV</button>
-                                <button onClick={reset} style={{background:'none', border:'none', color:'#444', cursor:'pointer', width: '100%'}}>CERRAR</button>
-                            </div>
+                             <div className="cyber-border flex-col" data-label="SELECT_CATEGORY" style={{maxWidth: '800px', width: '100%'}}>
+                                <h2 className="mb-4 text-center">SELECCIONAR ASIGNATURA</h2>
+                                <div className="selection-grid">
+                                    {Array.from({length: 9}).map((_, i) => {
+                                        const sub = gameState.allSubjects[i];
+                                        return (
+                                            <div 
+                                                key={i} 
+                                                onClick={() => sub && selectSubject(gameState.rawQuestions, sub)} 
+                                                className={`btn-select-grid ${!sub ? 'btn-empty' : ''}`}
+                                            >
+                                                {sub || ""}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                             </div>
+                        </div>
+                    )}
+
+                    {gameState.stage === 'admin-select-topic' && (
+                        <div className="screen">
+                             <div className="cyber-border flex-col" data-label="SELECT_TOPIC" style={{maxWidth: '1000px', width: '100%'}}>
+                                <h2 className="mb-4 text-center">SELECCIONAR SITUACIÓN</h2>
+                                <div className="selection-grid large">
+                                    {Array.from({length: 15}).map((_, i) => {
+                                        const topic = gameState.allTopics[i];
+                                        return (
+                                            <div 
+                                                key={i} 
+                                                onClick={() => topic && selectTopic(topic)} 
+                                                className={`btn-select-grid ${!topic ? 'btn-empty' : ''}`}
+                                            >
+                                                {topic || ""}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                             </div>
                         </div>
                     )}
 
@@ -459,43 +737,26 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                             <button onClick={() => {
                                 startTimeRef.current = Date.now();
                                 adminConns.current.forEach(c => {
-                                    const shuffled = [...gameState.rawQuestions].sort(()=>Math.random()-.5);
-                                    // Logic to take random 20 if more exist (shuffled contains all, slice takes first 20 distributed across sectors)
-                                    const sectors = [1,2,3,4,5].map(i => ({ id: i, questions: shuffled.slice((i-1)*4, i*4), accessCode: Math.floor(Math.random()*90+10).toString(), isSolved: false }));
+                                    // Get 20 questions based on logic (random or filled)
+                                    const gameQuestions = getGameQuestions(gameState.filteredQuestions);
+                                    
+                                    const sectors = [1,2,3,4,5].map(i => ({ id: i, questions: gameQuestions.slice((i-1)*4, i*4), accessCode: Math.floor(Math.random()*90+10).toString(), isSolved: false }));
                                     c.send({type:'GO', sectors});
                                 });
                                 setGameState(s => ({...s, stage: 'admin-monitor'}));
                             }} disabled={gameState.connectedSquads.length === 0} className="btn-cyber">INICIAR PROTOCOLO</button>
                             <div style={{marginTop: '2rem', fontSize: '0.8rem', opacity: 0.5}}>EQUIPOS: {gameState.connectedSquads.length}</div>
-                        </div>
-                    )}
-
-                    {gameState.stage === 'squad-selection' && (
-                        <div className="screen">
-                            <h2 className="mb-4">IDENTIFICACIÓN DE AGENTE</h2>
-                            <div className="cyber-border w-full" data-label="AVAILABILITY_MATRIX_6X5" style={{maxWidth: '1000px'}}>
-                                <div className="squad-grid-6x5">
-                                    {SQUADS.map(s => {
-                                        const taken = gameState.takenSquads.includes(s.name);
-                                        const selected = gameState.squadAnimal === s.name;
-                                        return (
-                                            <button key={s.name} disabled={taken || gameState.isSquadSelecting} onClick={() => {
-                                                setGameState(p => ({...p, isSquadSelecting: true, squadAnimal: s.name}));
-                                                connRef.current.send({type:'REQ', name: s.name});
-                                            }} className={`squad-card ${selected ? 'selected' : ''}`}>
-                                                <span className="squad-icon">{s.icon}</span>
-                                                <span className="squad-name">{s.name}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                            <div style={{fontSize: '0.7rem', color:'var(--c-blue)', marginTop:'5px'}}>PREGUNTAS EN POOL: {gameState.filteredQuestions.length}</div>
                         </div>
                     )}
 
                     {gameState.stage === 'squad-lobby' && (
                         <div className="screen">
-                            <div style={{fontSize: '6rem'}} className="pulse">📡</div>
+                            <div className="big-avatar-container">
+                                <div className="big-avatar-icon">{getSquadIcon(gameState.squadAnimal)}</div>
+                                <div className="big-avatar-name">{gameState.squadNick}</div>
+                                <div className="big-avatar-sub">ESTADO: CONECTADO</div>
+                            </div>
                             <h2 style={{letterSpacing: '5px'}}>ENLACE ESTABLECIDO</h2>
                             <p style={{opacity: 0.5}}>Esperando orden central...</p>
                         </div>
@@ -504,7 +765,10 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                     {gameState.stage === 'squad-intro' && (
                         <div className="screen">
                             <div className="cyber-border" data-label="SYSTEM_BOOT" style={{maxWidth: '500px', width: '100%'}}>
-                                <p style={{fontSize: '1.2rem', lineHeight: '2', whiteSpace: 'pre-wrap'}}>{`> GENTE_${gameState.squadAnimal?.toUpperCase()}\n> OBJETIVO: BÓVEDA HYDRA\n> ESTADO: LISTO`}</p>
+                                <div className="big-avatar-container" style={{marginBottom:'1rem'}}>
+                                    <div className="big-avatar-icon" style={{fontSize:'4rem'}}>{getSquadIcon(gameState.squadAnimal)}</div>
+                                </div>
+                                <p style={{fontSize: '1.2rem', lineHeight: '2', whiteSpace: 'pre-wrap', textAlign:'center'}}>{`> IDENTIDAD: ${gameState.squadNick}\n> OBJETIVO: BÓVEDA HYDRA\n> ESTADO: LISTO`}</p>
                                 <button onClick={() => setGameState(s => ({...s, stage: 'squad-game'}))} className="btn-cyber w-full" style={{marginTop: '2rem'}}>INICIAR HACKEO</button>
                             </div>
                         </div>
@@ -527,7 +791,12 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                             <div className="main-panel">
                                 <div className="cyber-border" data-label="HUD_V5.7" style={{padding: '1.5rem'}}>
                                     <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1rem'}}>
-                                        <div style={{fontWeight: 900, color: 'var(--c-green)', fontSize: '1.8rem'}}>GENTE_{gameState.squadAnimal?.toUpperCase()}</div>
+                                        <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                                            <span style={{fontSize:'2rem'}}>{getSquadIcon(gameState.squadAnimal)}</span>
+                                            <div style={{fontWeight: 900, color: 'var(--c-green)', fontSize: '1.5rem'}}>
+                                                {gameState.squadNick}
+                                            </div>
+                                        </div>
                                         <button onClick={() => setShowRules(true)} className="btn-cyber btn-outline" style={{padding:'0.5rem 1rem', fontSize:'0.7rem'}}>VER NORMAS</button>
                                     </div>
                                     <div className="instruction-panel">
@@ -549,9 +818,9 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                             <div className="vault-panel">
                                 <h3 className="text-center" style={{fontSize: '1rem', letterSpacing: '4px'}}>BÓVEDA_FINAL</h3>
                                 <div style={{display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px'}}>{vaultCodes.map((v, i) => <input key={i} maxLength={2} value={v} onChange={e=>{ const n=[...vaultCodes]; n[i]=e.target.value; setVaultCodes(n); }} className="vault-input" />)}</div>
-                                <button onClick={() => { if(gameState.sectors.every((s,i) => vaultCodes[i] === s.accessCode)) { connRef.current.send({type:'FIN', name: gameState.squadAnimal}); } else { setLockout(10); } }} className="btn-cyber w-full" style={{marginTop: 'auto', height: '100px'}}>DETENER NÚCLEO</button>
+                                <button onClick={() => { if(gameState.sectors.every((s,i) => vaultCodes[i] === s.accessCode)) { connRef.current.send({type:'FIN', name: gameState.squadNick}); } else { setLockout(10); } }} className="btn-cyber w-full" style={{marginTop: 'auto', height: '100px'}}>DETENER NÚCLEO</button>
                             </div>
-                            {activeSectorId && <SectorModal sector={gameState.sectors.find(s => s.id === activeSectorId)} onSolved={(id) => { setGameState(s => ({...s, sectors: s.sectors.map(x => x.id===id ? {...x, isSolved:true} : x)})); setActiveSectorId(null); connRef.current.send({type:'SECTOR_UPDATE', name: gameState.squadAnimal, sectorId: id}); }} onLock={() => { setLockout(10); setActiveSectorId(null); }} />}
+                            {activeSectorId && <SectorModal sector={gameState.sectors.find(s => s.id === activeSectorId)} onSolved={(id) => { setGameState(s => ({...s, sectors: s.sectors.map(x => x.id===id ? {...x, isSolved:true} : x)})); setActiveSectorId(null); connRef.current.send({type:'SECTOR_UPDATE', name: gameState.squadNick, sectorId: id}); }} onLock={() => { setLockout(10); setActiveSectorId(null); }} />}
                         </div>
                     )}
 
@@ -559,6 +828,9 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
                         <div className="screen">
                             <h2 className="title-huge">MISION COMPLETADA</h2>
                             <div className="cyber-border" data-label="DATA_LOG" style={{padding:'3rem', textAlign:'center'}}>
+                                <div className="big-avatar-container">
+                                    <div className="big-avatar-icon">{getSquadIcon(gameState.squadAnimal)}</div>
+                                </div>
                                 <p style={{color:'var(--c-gold)', fontSize:'1.5rem'}}>#RANKING: {gameState.finalRank}</p>
                                 <p style={{fontSize:'3rem', margin:'1rem 0'}}>{formatTime(gameState.finalTime)}</p>
                             </div>
@@ -567,16 +839,29 @@ quiz;¿Qué dispositivo conecta segmentos de red en una lógica?;Router;Repetido
 
                     {gameState.stage === 'admin-monitor' && (
                         <div className="screen" style={{padding: '2rem'}}>
-                            <div style={{width:'100%', display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}><h1>CENTRO_MONITOREO</h1><button onClick={handleTerminate} className="btn-cyber" style={{background:'var(--c-red)', color:'#fff'}}>TERMINAR GLOBAL</button></div>
+                            <div style={{width:'100%', display:'flex', justifyContent:'space-between', marginBottom:'1rem', alignItems:'center'}}>
+                                <div>
+                                    <h1 style={{margin:0}}>CENTRO_MONITOREO</h1>
+                                    <div style={{fontSize:'0.8rem', color:'var(--c-blue)', marginTop:'5px'}}>
+                                        ASIGNATURA: {gameState.selectedSubject} | SITUACIÓN: {gameState.selectedTopic}
+                                    </div>
+                                </div>
+                                <button onClick={handleTerminate} className="btn-cyber" style={{background:'var(--c-red)', color:'#fff'}}>TERMINAR GLOBAL</button>
+                            </div>
                             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2rem', width:'100%', flex:1}}>
-                                <div className="cyber-border" data-label="TERMINAL_WINS">{gameState.finishedSquads.map((s,i) => (<div key={i} style={{display:'flex', justifyContent:'space-between', padding:'15px', borderBottom:'1px solid #333'}}><span>#{i+1} GENTE_{s.name.toUpperCase()}</span><span style={{color:'var(--c-gold)'}}>{formatTime(s.time)}</span></div>))}</div>
+                                <div className="cyber-border" data-label="TERMINAL_WINS">{gameState.finishedSquads.map((s,i) => (<div key={i} style={{display:'flex', justifyContent:'space-between', padding:'15px', borderBottom:'1px solid #333'}}><span>#{i+1} {s.name}</span><span style={{color:'var(--c-gold)'}}>{formatTime(s.time)}</span></div>))}</div>
                                 <div className="cyber-border" data-label="LIVE_PROGRESS">
                                     <div style={{display:'grid', gridTemplateColumns:'1fr', gap:'10px'}}>
-                                        {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f=>f.name===s)).map(s => {
-                                            const prog = gameState.squadProgress[s] || [];
+                                        {/* Monitor uses connectedSquads (which are now Nicks) */}
+                                        {gameState.connectedSquads.filter(s => !gameState.finishedSquads.find(f=>f.name===s)).map(nick => {
+                                            const prog = gameState.squadProgress[nick] || [];
+                                            const avatarName = gameState.playerAvatars[nick];
                                             return (
-                                                <div key={s} style={{padding:'10px', border:'1px solid var(--c-blue)', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                                                    <span style={{fontWeight:'bold'}}>{s}</span>
+                                                <div key={nick} style={{padding:'10px', border:'1px solid var(--c-blue)', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                                    <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                                                        <span style={{fontSize:'1.5rem'}}>{getSquadIcon(avatarName)}</span>
+                                                        <span style={{fontWeight:'bold', color:'var(--c-green)', fontSize: '1.2rem'}}>{nick}</span>
+                                                    </div>
                                                     <div style={{display:'flex', gap:'5px'}}>
                                                         {[1,2,3,4,5].map(id => (
                                                             <div key={id} style={{
